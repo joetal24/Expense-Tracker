@@ -28,8 +28,15 @@
     .period-title {
       font-weight: 700;
       color: #1d4ed8;
-      margin-bottom: 10px;
+      margin-bottom: 2px;
       font-size: 1rem;
+    }
+
+    .period-range {
+      color: #64748b;
+      font-size: 0.82rem;
+      margin-bottom: 10px;
+      font-weight: 600;
     }
 
     .metric-row {
@@ -93,6 +100,7 @@
       <div class="summary-grid">
         <article class="period-card">
           <h3 class="period-title">Weekly</h3>
+          <p class="period-range">{{ periods.weekly }}</p>
           <div class="metric-row">
             <span class="metric-label">Total Expenses</span>
             <span class="metric-value">UGX {{ totals.weekly.expenses|floatformat:0|intcomma }}</span>
@@ -105,6 +113,7 @@
 
         <article class="period-card">
           <h3 class="period-title">Monthly</h3>
+          <p class="period-range">{{ periods.monthly }}</p>
           <div class="metric-row">
             <span class="metric-label">Total Expenses</span>
             <span class="metric-value">UGX {{ totals.monthly.expenses|floatformat:0|intcomma }}</span>
@@ -117,6 +126,7 @@
 
         <article class="period-card">
           <h3 class="period-title">Yearly</h3>
+          <p class="period-range">{{ periods.yearly }}</p>
           <div class="metric-row">
             <span class="metric-label">Total Expenses</span>
             <span class="metric-value">UGX {{ totals.yearly.expenses|floatformat:0|intcomma }}</span>

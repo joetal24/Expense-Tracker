@@ -51,9 +51,16 @@ def home(request):
         },
     }
 
+    periods = {
+        'weekly': f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}",
+        'monthly': f"{month_start.strftime('%b %d')} - {month_end.strftime('%b %d, %Y')}",
+        'yearly': f"{year_start.strftime('%b %d')} - {year_end.strftime('%b %d, %Y')}",
+    }
+
     context = {
         'user': request.user,
         'totals': totals,
+        'periods': periods,
     }
     return render(request, 'fin_manager/home.html', context)
 
