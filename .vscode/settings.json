@@ -1,0 +1,5 @@
+{
+    "chat.tools.terminal.autoApprove": {
+        "/home/joel/Documents/GitHub/Expense-Tracker/.venv/bin/python": true
+    }
+}

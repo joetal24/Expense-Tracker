@@ -24,6 +24,7 @@ class Liability(models.Model):
     name = models.CharField(max_length=100)
     amount = models.FloatField(default=0)
     interest_rate = models.FloatField(default=0)
+    is_loan = models.BooleanField(default=False)
     end_date = models.DateField()
     user = models.ForeignKey('auth.User', on_delete=models.CASCADE)
 

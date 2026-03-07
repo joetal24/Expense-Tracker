@@ -1,19 +1,143 @@
-<html>
-	<head>
-		<title>Home</title>
-	</head>
-	<body>
-	{% block content %}
-		{% if user.is_authenticated %}
-    			<h2>Welcome, {{ user.username }}!</h2>
-		{% else %}
-			<h2>Welcome! <br> 
-				<a href="{% url 'register' %}">Register</a> or
-				<a href="{% url 'login' %}">Login</a>
-				on our site </h2>
-		{% endif %}
-	{% endblock %}
+{% extends 'base.html' %}
+{% load humanize %}
 
+{% block title %}Home{% endblock %}
 
-	</body>
-</html>
+{% block main_class %}page-center{% endblock %}
+
+{% block extra_styles %}
+  <style>
+    .dashboard-card {
+      max-width: 100%;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+      margin-top: 14px;
+    }
+
+    .period-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .period-title {
+      font-weight: 700;
+      color: #1d4ed8;
+      margin-bottom: 10px;
+      font-size: 1rem;
+    }
+
+    .metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      gap: 10px;
+    }
+
+    .metric-label {
+      color: #334155;
+      font-weight: 600;
+      font-size: 0.92rem;
+    }
+
+    .metric-value {
+      color: #0f172a;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      white-space: nowrap;
+    }
+
+    .dashboard-links {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .dash-link {
+      display: inline-block;
+      padding: 8px 12px;
+      border-radius: 10px;
+      color: #1e3a8a;
+      font-weight: 700;
+      text-decoration: none;
+      background: #eff6ff;
+      border: 1px solid #dbeafe;
+    }
+
+    .dash-link:hover {
+      background: #dbeafe;
+      text-decoration: none;
+    }
+
+    @media (max-width: 960px) {
+      .summary-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="card dashboard-card">
+    {% if user.is_authenticated %}
+      <h1 class="title">Welcome, {{ user.username }}!</h1>
+      <p class="subtitle">Summary of your total amounts by due-date period.</p>
+
+      <div class="summary-grid">
+        <article class="period-card">
+          <h3 class="period-title">Weekly</h3>
+          <div class="metric-row">
+            <span class="metric-label">Total Expenses</span>
+            <span class="metric-value">UGX {{ totals.weekly.expenses|floatformat:0|intcomma }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Loans to Pay</span>
+            <span class="metric-value">UGX {{ totals.weekly.loans|floatformat:0|intcomma }}</span>
+          </div>
+        </article>
+
+        <article class="period-card">
+          <h3 class="period-title">Monthly</h3>
+          <div class="metric-row">
+            <span class="metric-label">Total Expenses</span>
+            <span class="metric-value">UGX {{ totals.monthly.expenses|floatformat:0|intcomma }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Loans to Pay</span>
+            <span class="metric-value">UGX {{ totals.monthly.loans|floatformat:0|intcomma }}</span>
+          </div>
+        </article>
+
+        <article class="period-card">
+          <h3 class="period-title">Yearly</h3>
+          <div class="metric-row">
+            <span class="metric-label">Total Expenses</span>
+            <span class="metric-value">UGX {{ totals.yearly.expenses|floatformat:0|intcomma }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Total Loans to Pay</span>
+            <span class="metric-value">UGX {{ totals.yearly.loans|floatformat:0|intcomma }}</span>
+          </div>
+        </article>
+      </div>
+
+      <div class="dashboard-links">
+        <a class="dash-link" href="{% url 'expenses' %}">Manage Expenses</a>
+        <a class="dash-link" href="{% url 'loans' %}">Manage Loans</a>
+      </div>
+    {% else %}
+      <h1 class="title">Welcome!</h1>
+      <p class="subtitle">
+        <a href="{% url 'register' %}">Register</a> or
+        <a href="{% url 'login' %}">Login</a> to continue.
+      </p>
+    {% endif %}
+  </div>
+{% endblock %}

@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 {% load humanize %}
 
-{% block title %}Expenses{% endblock %}
+{% block title %}Loans{% endblock %}
 
 {% block extra_styles %}
   <style>
@@ -11,45 +11,36 @@
       gap: 20px;
     }
 
-    .list-block h3 {
-      color: #1d4ed8;
-      margin-bottom: 8px;
-    }
-
-    .list-block ul {
+    .loan-list {
       list-style: none;
-      margin-bottom: 14px;
       padding-left: 0;
+      margin-top: 14px;
     }
 
-    .list-item {
+    .loan-item {
       background: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 10px;
-      padding: 10px 12px;
-      margin-bottom: 8px;
-      color: #0f172a;
+      padding: 12px 14px;
+      margin-bottom: 10px;
     }
 
-    .item-row {
+    .loan-row {
       display: flex;
-      align-items: center;
       justify-content: space-between;
+      align-items: center;
       gap: 12px;
-      margin-bottom: 2px;
     }
 
-    .item-name {
+    .loan-name {
       font-weight: 600;
       color: #0f172a;
-      word-break: break-word;
     }
 
-    .item-amount {
+    .loan-amount {
       font-weight: 700;
       color: #1d4ed8;
       white-space: nowrap;
-      text-align: right;
       font-variant-numeric: tabular-nums;
     }
 
@@ -83,9 +74,22 @@
       box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
     }
 
-    .empty-text {
+    .input-with-suffix {
+      position: relative;
+    }
+
+    .input-with-suffix input {
+      padding-right: 34px;
+    }
+
+    .suffix {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
       color: #475569;
-      font-size: 0.95rem;
+      font-weight: 700;
+      pointer-events: none;
     }
 
     @media (max-width: 860px) {
@@ -98,36 +102,42 @@
 
 {% block content %}
   <div class="layout-grid">
-    <section class="card list-block">
-      <h1 class="title">Expense List</h1>
-      {% if expense_data %}
-        {% for year_month, liabilities in expense_data.items %}
-          <h3>{{ year_month }}</h3>
-          <ul>
-            {% for liability in liabilities %}
-              <li class="list-item">
-                <div class="item-row">
-                  <span class="item-name">{{ liability.name }}</span>
-                  <span class="item-amount">UGX {{ liability.amount|floatformat:0|intcomma }}</span>
-                </div>
-                <div class="helper-text">End Date: {{ liability.end_date }}</div>
-              </li>
-            {% endfor %}
-          </ul>
-        {% endfor %}
+    <section class="card">
+      <h1 class="title">Loans</h1>
+      <p class="subtitle">Overview of your loan entries.</p>
+
+      {% if loans %}
+        <ul class="loan-list">
+          {% for loan in loans %}
+            <li class="loan-item">
+              <div class="loan-row">
+                <span class="loan-name">{{ loan.name }}</span>
+                <span class="loan-amount">UGX {{ loan.amount|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="helper-text">End Date: {{ loan.end_date }}</div>
+            </li>
+          {% endfor %}
+        </ul>
       {% else %}
-        <p class="empty-text">No expenses yet. Add your first liability.</p>
+        <p class="helper-text">No loans available yet.</p>
       {% endif %}
     </section>
 
     <section class="card form-card">
-      <h2 class="title">Add Liability</h2>
+      <h2 class="title">Add Loan</h2>
       <form method="post">
         {% csrf_token %}
         {% for field in form %}
           <p>
             {{ field.label_tag }}
-            {{ field }}
+            {% if field.name == 'interest_rate' %}
+              <span class="input-with-suffix">
+                {{ field }}
+                <span class="suffix">%</span>
+              </span>
+            {% else %}
+              {{ field }}
+            {% endif %}
             {% if field.name == 'amount' %}
               <small class="helper-text">Currency: UGX</small>
             {% endif %}
@@ -136,7 +146,7 @@
             {% endfor %}
           </p>
         {% endfor %}
-        <button type="submit" class="btn-primary">Add Liability</button>
+        <button type="submit" class="btn-primary">Add Loan</button>
       </form>
     </section>
   </div>

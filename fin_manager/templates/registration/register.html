@@ -1,9 +1,71 @@
-{% block content %}
-  <h2>Register</h2>
-  <form method="post">
-    {% csrf_token %}
-    {{ form.as_p }}
+{% extends 'base.html' %}
 
-    <button type="submit">Register</button>
-  </form>
+{% block title %}Register{% endblock %}
+
+{% block main_class %}page-center{% endblock %}
+
+{% block content %}
+  <div class="card auth-card">
+    <h1 class="title">Create Account</h1>
+    <p class="subtitle">Start tracking your finances in one place.</p>
+
+    {% if form.non_field_errors %}
+      <div class="error-box">
+        {% for error in form.non_field_errors %}
+          <div>{{ error }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+
+      <div class="field-group">
+        <label class="field-label" for="id_username">Username</label>
+        {{ form.username }}
+        {% if form.username.help_text %}
+          <div class="helper-text">{{ form.username.help_text|safe }}</div>
+        {% endif %}
+        {% for error in form.username.errors %}
+          <div class="error-box">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="id_password1">Password</label>
+        {{ form.password1 }}
+        {% if form.password1.help_text %}
+          <div class="helper-text">{{ form.password1.help_text|safe }}</div>
+        {% endif %}
+        {% for error in form.password1.errors %}
+          <div class="error-box">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="field-group">
+        <label class="field-label" for="id_password2">Confirm Password</label>
+        {{ form.password2 }}
+        {% if form.password2.help_text %}
+          <div class="helper-text">{{ form.password2.help_text|safe }}</div>
+        {% endif %}
+        {% for error in form.password2.errors %}
+          <div class="error-box">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <button type="submit" class="btn-primary">Register</button>
+    </form>
+
+    <p class="footer-note">
+      Already have an account? <a href="{% url 'login' %}">Login</a>
+    </p>
+  </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  <script>
+    document.querySelectorAll('input').forEach(function (input) {
+      input.classList.add('field-input');
+    });
+  </script>
 {% endblock %}
