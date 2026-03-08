@@ -84,6 +84,7 @@ WSGI_APPLICATION = 'FinanceManager.wsgi.application'
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
 database_url = os.getenv('DATABASE_URL')
+use_leapcell_db = os.getenv('LEAPCELL_USE_MANAGED_DB', 'False').lower() == 'true'
 
 if database_url:
     import dj_database_url
@@ -94,6 +95,18 @@ if database_url:
             conn_max_age=600,
             ssl_require=os.getenv('DATABASE_SSL_REQUIRE', 'True').lower() == 'true',
         )
+    }
+elif use_leapcell_db:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': os.getenv('PGDATABASE', 'kxwieashqfyaiilqdgpo'),
+            'USER': os.getenv('PGUSER', 'mibeuipyulusnbyqqgtp'),
+            'PASSWORD': os.getenv('PGPASSWORD', 'dihpfhdvihslqlricchxqasdqiojcn'),
+            'HOST': os.getenv('PGHOST', '9qasp5v56q8ckkf5dc.leapcellpool.com'),
+            'PORT': os.getenv('PGPORT', '6438'),
+            'OPTIONS': {'sslmode': os.getenv('PGSSLMODE', 'require')},
+        }
     }
 else:
     DATABASES = {
