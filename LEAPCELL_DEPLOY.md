@@ -26,7 +26,7 @@ Why this works:
 ## 3) Start Command
 
 ```bash
-gunicorn --bind 0.0.0.0:8080 FinanceManager.wsgi:application
+gunicorn --bind 0.0.0.0:8080 --worker-tmp-dir /tmp --pid /tmp/gunicorn.pid --access-logfile - --error-logfile - FinanceManager.wsgi:application
 ```
 
 ## 4) Environment Variables
@@ -36,6 +36,12 @@ Set these in Leapcell:
 - `DJANGO_SECRET_KEY` = a generated secret
 - `DJANGO_DEBUG` = `False`
 - `DJANGO_ALLOWED_HOSTS` = `*` (quick start) or your exact Leapcell domain
+- `DATABASE_URL` = your managed Postgres connection string
+- `TMPDIR` = `/tmp`
+
+Notes:
+- `DATABASE_URL` is recommended on Leapcell because SQLite can fail on read-only runtimes.
+- Keep `DATABASE_SSL_REQUIRE=True` (default in this project) for managed cloud Postgres unless your provider says otherwise.
 
 Generate a secret key locally:
 
@@ -57,3 +63,6 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 ### `DisallowedHost`
 Set `DJANGO_ALLOWED_HOSTS` in Leapcell to your deployed domain (or `*` temporarily).
+
+### `Read-only file system`
+Use the Start Command above (with `--worker-tmp-dir /tmp` and `--pid /tmp/gunicorn.pid`) and set `TMPDIR=/tmp`.
