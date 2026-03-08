@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.http import HttpResponse
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm
 from django.db.models import Sum
@@ -106,6 +107,10 @@ def loans(request):
 
     user_loans = Liability.objects.filter(user=request.user, is_loan=True)
     return render(request, 'fin_manager/loans.html', {'loans': user_loans, 'form': form})
+
+
+def healthcheck(request):
+    return HttpResponse('ok', content_type='text/plain')
 
 
 class ExpenseListView(FormView):
