@@ -7,12 +7,19 @@ This tracks alignment between `akaunti_reference/django_api/api_urls.py` and the
 - `POST /api/auth/register/`
 - `POST /api/auth/login/`
 - `POST /api/auth/refresh/`
+- `POST /api/auth/verify/`
 - `GET /api/auth/me/`
-- `GET/PUT /api/accounts/` (singleton account endpoint)
+- `GET/PATCH /api/auth/profile/`
+- `GET/POST /api/accounts/`
+- `GET/PUT/DELETE /api/accounts/<id>/`
 - `GET /api/categories/`
 - `GET/POST /api/expenses/`
+- `GET/PUT/DELETE /api/expenses/<id>/`
 - `GET/POST /api/income/`
+- `GET/PUT/DELETE /api/income/<id>/`
 - `GET/POST /api/loans/` (project-specific extension)
+- `GET/POST /api/budgets/`
+- `GET/PUT/DELETE /api/budgets/<id>/`
 - `GET /api/reports/monthly/`
 - `GET /api/reports/trends/`
 - `GET /api/dashboard/`
@@ -24,18 +31,12 @@ This tracks alignment between `akaunti_reference/django_api/api_urls.py` and the
 ## Partially Aligned
 
 - `accounts/`
-  - Akaunti reference uses list/create + detail by UUID.
-  - Current app uses a single account resource at `/api/accounts/` for authenticated user.
+  - Akaunti reference uses UUID account ids.
+  - Current app uses integer ids and a one-account-per-user model constraint.
 
 ## Not Yet Implemented
 
-- `POST /api/auth/verify/`
-- `PATCH /api/auth/profile/`
-- `GET/PUT/DELETE /api/accounts/<id>/`
-- `GET/PUT/DELETE /api/expenses/<id>/`
-- `GET/PUT/DELETE /api/income/<id>/`
-- `GET/POST /api/budgets/`
-- `GET/PUT/DELETE /api/budgets/<id>/`
+- None from the current target list.
 
 ## Flutter Base URL
 

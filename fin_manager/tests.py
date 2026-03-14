@@ -217,3 +217,121 @@ class FinanceApiTests(TestCase):
 		dashboard_response = self.client.get(reverse('api-dashboard'), **headers)
 		self.assertEqual(dashboard_response.status_code, 200)
 		self.assertIn('totals', dashboard_response.json())
+
+	def test_contract_gap_endpoints(self):
+		self.client.post(
+			reverse('api-register'),
+			{
+				'username': 'contractuser',
+				'password': 'StrongPass123!',
+			},
+		)
+
+		login_response = self.client.post(
+			reverse('api-login'),
+			{
+				'username': 'contractuser',
+				'password': 'StrongPass123!',
+			},
+		)
+		self.assertEqual(login_response.status_code, 200)
+		token = login_response.json()['access']
+		headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+
+		verify_response = self.client.post(
+			reverse('api-verify'),
+			{'token': token},
+			content_type='application/json',
+		)
+		self.assertEqual(verify_response.status_code, 200)
+
+		profile_response = self.client.patch(
+			reverse('api-profile'),
+			{
+				'phone_number': '0700000000',
+				'dark_mode': True,
+			},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(profile_response.status_code, 200)
+		self.assertEqual(profile_response.json()['phone_number'], '0700000000')
+
+		accounts_response = self.client.get(reverse('api-account'), **headers)
+		self.assertEqual(accounts_response.status_code, 200)
+		self.assertGreaterEqual(len(accounts_response.json()), 1)
+		account_id = accounts_response.json()[0]['id']
+
+		account_detail_response = self.client.patch(
+			reverse('api-account-detail', args=[account_id]),
+			{'name': 'Updated Account Name'},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(account_detail_response.status_code, 200)
+
+		expense_response = self.client.post(
+			reverse('api-expenses'),
+			{
+				'name': 'Detail Expense',
+				'amount': '22000',
+				'due_date': '2026-03-14',
+				'notes': 'Initial note',
+			},
+			**headers,
+		)
+		self.assertEqual(expense_response.status_code, 201)
+		expense_id = expense_response.json()['id']
+
+		expense_detail_response = self.client.patch(
+			reverse('api-expense-detail', args=[expense_id]),
+			{'notes': 'Updated note'},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(expense_detail_response.status_code, 200)
+
+		income_response = self.client.post(
+			reverse('api-income'),
+			{
+				'name': 'Detail Income',
+				'amount': '120000',
+				'due_date': '2026-03-14',
+				'notes': 'Initial income note',
+			},
+			**headers,
+		)
+		self.assertEqual(income_response.status_code, 201)
+		income_id = income_response.json()['id']
+
+		income_detail_response = self.client.patch(
+			reverse('api-income-detail', args=[income_id]),
+			{'notes': 'Updated income note'},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(income_detail_response.status_code, 200)
+
+		budget_response = self.client.post(
+			reverse('api-budgets'),
+			{
+				'name': 'Monthly Food Budget',
+				'category': 'Food',
+				'amount': '350000',
+				'period': 'monthly',
+				'start_date': '2026-03-01',
+				'end_date': '2026-03-31',
+				'alert_threshold': 80,
+				'is_active': True,
+			},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(budget_response.status_code, 201)
+		budget_id = budget_response.json()['id']
+
+		budget_list_response = self.client.get(reverse('api-budgets'), **headers)
+		self.assertEqual(budget_list_response.status_code, 200)
+
+		budget_detail_response = self.client.get(reverse('api-budget-detail', args=[budget_id]), **headers)
+		self.assertEqual(budget_detail_response.status_code, 200)

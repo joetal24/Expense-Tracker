@@ -11,6 +11,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .api_serializers import (
     AccountSerializer,
+    BudgetSerializer,
     CategorySerializer,
     DashboardSerializer,
     ExpenseSerializer,
@@ -20,8 +21,9 @@ from .api_serializers import (
     ReceiptSerializer,
     RegisterSerializer,
     SyncPayloadSerializer,
+    UserProfileSerializer,
 )
-from .models import Account, FCMDevice, Receipt, Transaction
+from .models import Account, Budget, FCMDevice, Receipt, Transaction, UserProfile
 from .sms_parser import MoMoSMSParser
 
 
@@ -52,6 +54,17 @@ class RefreshTokenAPIView(TokenRefreshView):
     permission_classes = [permissions.AllowAny]
 
 
+class VerifyTokenAPIView(APIView):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request):
+        from rest_framework_simplejwt.serializers import TokenVerifySerializer
+
+        serializer = TokenVerifySerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        return Response({'detail': 'Token is valid.'})
+
+
 class MeAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -69,16 +82,51 @@ class MeAPIView(APIView):
         )
 
 
-class AccountAPIView(generics.RetrieveUpdateAPIView):
+class ProfileAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        return Response(UserProfileSerializer(profile).data)
+
+    def patch(self, request):
+        profile, _ = UserProfile.objects.get_or_create(user=request.user)
+        serializer = UserProfileSerializer(profile, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class AccountListCreateAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        accounts = Account.objects.filter(user=request.user).order_by('id')
+        if not accounts.exists():
+            account, _ = Account.objects.get_or_create(
+                user=request.user,
+                defaults={'name': f'{request.user.username} Main Account'},
+            )
+            accounts = Account.objects.filter(id=account.id)
+        return Response(AccountSerializer(accounts, many=True).data)
+
+    def post(self, request):
+        account, created = Account.objects.get_or_create(
+            user=request.user,
+            defaults={'name': f'{request.user.username} Main Account'},
+        )
+        serializer = AccountSerializer(account, data=request.data, partial=not created)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
+
+
+class AccountDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
     serializer_class = AccountSerializer
     permission_classes = [permissions.IsAuthenticated]
 
-    def get_object(self):
-        account, _ = Account.objects.get_or_create(
-            user=self.request.user,
-            defaults={'name': f'{self.request.user.username} Main Account'},
-        )
-        return account
+    def get_queryset(self):
+        return Account.objects.filter(user=self.request.user)
 
 
 class CategoryListAPIView(APIView):
@@ -112,6 +160,18 @@ class ExpenseListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(account=account, kind=Transaction.Kind.EXPENSE, interest_rate=None)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class ExpenseDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = ExpenseSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'},
+        )
+        return account.transactions.expenses().order_by('-due_date', '-created_at')
 
 
 class LoanListCreateAPIView(generics.ListCreateAPIView):
@@ -162,6 +222,37 @@ class IncomeListCreateAPIView(generics.ListCreateAPIView):
         serializer.save(account=account, kind=Transaction.Kind.INCOME, interest_rate=None)
         headers = self.get_success_headers(serializer.data)
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
+class IncomeDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = IncomeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'},
+        )
+        return account.transactions.incomes().order_by('-due_date', '-created_at')
+
+
+class BudgetListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Budget.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
+
+class BudgetDetailAPIView(generics.RetrieveUpdateDestroyAPIView):
+    serializer_class = BudgetSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Budget.objects.filter(user=self.request.user)
 
 
 class SyncAPIView(APIView):

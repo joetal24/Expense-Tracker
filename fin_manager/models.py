@@ -91,3 +91,45 @@ class FCMDevice(models.Model):
 
     def __str__(self):
         return f"{self.user.username} device"
+
+
+class UserProfile(models.Model):
+    user = models.OneToOneField('auth.User', on_delete=models.CASCADE, related_name='profile')
+    phone_number = models.CharField(max_length=20, blank=True)
+    currency = models.CharField(max_length=3, default='UGX')
+    timezone = models.CharField(max_length=50, default='Africa/Kampala')
+    biometric_enabled = models.BooleanField(default=False)
+    dark_mode = models.BooleanField(default=False)
+    sms_parsing_enabled = models.BooleanField(default=True)
+    notification_budget_alert = models.BooleanField(default=True)
+    notification_weekly_summary = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return f"Profile: {self.user.username}"
+
+
+class Budget(models.Model):
+    class Period(models.TextChoices):
+        MONTHLY = 'monthly', 'Monthly'
+        WEEKLY = 'weekly', 'Weekly'
+        CUSTOM = 'custom', 'Custom'
+
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='budgets')
+    name = models.CharField(max_length=120)
+    category = models.CharField(max_length=100, blank=True)
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    period = models.CharField(max_length=10, choices=Period.choices, default=Period.MONTHLY)
+    start_date = models.DateField()
+    end_date = models.DateField()
+    alert_threshold = models.PositiveIntegerField(default=80)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-start_date', '-created_at']
+
+    def __str__(self):
+        return self.name

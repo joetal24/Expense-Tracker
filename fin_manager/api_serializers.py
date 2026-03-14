@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Account, FCMDevice, Receipt, Transaction
+from .models import Account, Budget, FCMDevice, Receipt, Transaction, UserProfile
 from .services import build_dashboard_summary
 
 
@@ -19,6 +19,24 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         Account.objects.get_or_create(user=user, defaults={'name': f'{user.username} Main Account'})
         return user
+
+
+class UserProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = UserProfile
+        fields = [
+            'phone_number',
+            'currency',
+            'timezone',
+            'biometric_enabled',
+            'dark_mode',
+            'sms_parsing_enabled',
+            'notification_budget_alert',
+            'notification_weekly_summary',
+            'created_at',
+            'updated_at',
+        ]
+        read_only_fields = ['created_at', 'updated_at']
 
 
 class AccountSerializer(serializers.ModelSerializer):
@@ -115,4 +133,23 @@ class FCMDeviceSerializer(serializers.ModelSerializer):
     class Meta:
         model = FCMDevice
         fields = ['id', 'token', 'device_name', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+
+class BudgetSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Budget
+        fields = [
+            'id',
+            'name',
+            'category',
+            'amount',
+            'period',
+            'start_date',
+            'end_date',
+            'alert_threshold',
+            'is_active',
+            'created_at',
+            'updated_at',
+        ]
         read_only_fields = ['id', 'created_at', 'updated_at']
