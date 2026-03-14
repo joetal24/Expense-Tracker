@@ -1,6 +1,7 @@
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.core.files.uploadedfile import SimpleUploadedFile
 
 from .models import Account, Transaction
 
@@ -178,6 +179,40 @@ class FinanceApiTests(TestCase):
 		trend_report = self.client.get(reverse('api-report-trends'), **headers)
 		self.assertEqual(trend_report.status_code, 200)
 		self.assertIn('trends', trend_report.json())
+
+		receipt_file = SimpleUploadedFile('receipt.txt', b'receipt content', content_type='text/plain')
+		receipt_response = self.client.post(
+			reverse('api-receipts'),
+			{
+				'transaction': expense_response.json()['id'],
+				'file': receipt_file,
+			},
+			**headers,
+		)
+		self.assertEqual(receipt_response.status_code, 201)
+
+		fcm_response = self.client.post(
+			reverse('api-fcm-register'),
+			{
+				'token': 'device-token-123',
+				'device_name': 'Pixel 7',
+				'is_active': True,
+			},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(fcm_response.status_code, 201)
+
+		sms_response = self.client.post(
+			reverse('api-sms-parse'),
+			{
+				'sms': 'You have sent UGX 15,000 to John Doe. Transaction ID: MTN20260313.',
+			},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(sms_response.status_code, 200)
+		self.assertTrue(sms_response.json()['parsed'])
 
 		dashboard_response = self.client.get(reverse('api-dashboard'), **headers)
 		self.assertEqual(dashboard_response.status_code, 200)

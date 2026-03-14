@@ -62,3 +62,32 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.kind})"
+
+
+class Receipt(models.Model):
+    transaction = models.ForeignKey(Transaction, on_delete=models.CASCADE, related_name='receipts', null=True, blank=True)
+    uploaded_by = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='uploaded_receipts')
+    file = models.FileField(upload_to='receipts/%Y/%m/')
+    extracted_text = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"Receipt {self.id}"
+
+
+class FCMDevice(models.Model):
+    user = models.ForeignKey('auth.User', on_delete=models.CASCADE, related_name='fcm_devices')
+    token = models.TextField(unique=True)
+    device_name = models.CharField(max_length=200, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+
+    def __str__(self):
+        return f"{self.user.username} device"

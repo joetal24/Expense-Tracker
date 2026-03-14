@@ -5,14 +5,17 @@ from .api_views import (
     CategoryListAPIView,
     DashboardAPIView,
     ExpenseListCreateAPIView,
+    FCMDeviceAPIView,
     IncomeListCreateAPIView,
     LoginAPIView,
     LoanListCreateAPIView,
     MeAPIView,
+    ReceiptUploadAPIView,
     ReportMonthlyAPIView,
     ReportTrendsAPIView,
     RefreshTokenAPIView,
     RegisterAPIView,
+    SMSParseAPIView,
     SyncAPIView,
 )
 
@@ -30,4 +33,7 @@ urlpatterns = [
     path('reports/trends/', ReportTrendsAPIView.as_view(), name='api-report-trends'),
     path('dashboard/', DashboardAPIView.as_view(), name='api-dashboard'),
     path('sync/', SyncAPIView.as_view(), name='api-sync'),
+    path('receipts/', ReceiptUploadAPIView.as_view(), name='api-receipts'),
+    path('fcm/register/', FCMDeviceAPIView.as_view(), name='api-fcm-register'),
+    path('sms/parse/', SMSParseAPIView.as_view(), name='api-sms-parse'),
 ]

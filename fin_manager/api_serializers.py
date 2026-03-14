@@ -1,7 +1,7 @@
 from django.contrib.auth.models import User
 from rest_framework import serializers
 
-from .models import Account, Transaction
+from .models import Account, FCMDevice, Receipt, Transaction
 from .services import build_dashboard_summary
 
 
@@ -102,3 +102,17 @@ class DashboardSerializer(serializers.Serializer):
     @staticmethod
     def from_account(account):
         return build_dashboard_summary(account)
+
+
+class ReceiptSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Receipt
+        fields = ['id', 'transaction', 'file', 'extracted_text', 'created_at']
+        read_only_fields = ['id', 'extracted_text', 'created_at']
+
+
+class FCMDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = FCMDevice
+        fields = ['id', 'token', 'device_name', 'is_active', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']

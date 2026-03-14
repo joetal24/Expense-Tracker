@@ -14,12 +14,15 @@ from .api_serializers import (
     CategorySerializer,
     DashboardSerializer,
     ExpenseSerializer,
+    FCMDeviceSerializer,
     IncomeSerializer,
     LoanSerializer,
+    ReceiptSerializer,
     RegisterSerializer,
     SyncPayloadSerializer,
 )
-from .models import Account, Transaction
+from .models import Account, FCMDevice, Receipt, Transaction
+from .sms_parser import MoMoSMSParser
 
 
 DEFAULT_CATEGORIES = [
@@ -325,3 +328,58 @@ class DashboardAPIView(APIView):
         )
         payload = DashboardSerializer.from_account(account)
         return Response(payload)
+
+
+class ReceiptUploadAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        transaction_id = request.data.get('transaction')
+        transaction = None
+
+        if transaction_id:
+            account, _ = Account.objects.get_or_create(
+                user=request.user,
+                defaults={'name': f'{request.user.username} Main Account'},
+            )
+            try:
+                transaction = account.transactions.get(id=transaction_id)
+            except Transaction.DoesNotExist:
+                return Response({'detail': 'Transaction not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+        serializer = ReceiptSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        receipt = serializer.save(uploaded_by=request.user, transaction=transaction)
+        return Response(ReceiptSerializer(receipt).data, status=status.HTTP_201_CREATED)
+
+
+class FCMDeviceAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        serializer = FCMDeviceSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        device, _ = FCMDevice.objects.update_or_create(
+            token=serializer.validated_data['token'],
+            defaults={
+                'user': request.user,
+                'device_name': serializer.validated_data.get('device_name', ''),
+                'is_active': serializer.validated_data.get('is_active', True),
+            },
+        )
+        return Response(FCMDeviceSerializer(device).data, status=status.HTTP_201_CREATED)
+
+
+class SMSParseAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request):
+        sms_text = request.data.get('sms', '')
+        if not sms_text:
+            return Response({'detail': 'sms is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        parsed = MoMoSMSParser.parse(sms_text)
+        if parsed:
+            return Response({'parsed': True, 'data': parsed})
+        return Response({'parsed': False, 'data': None})
