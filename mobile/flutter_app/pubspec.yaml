@@ -1,0 +1,69 @@
+name: ugandan_finance_app
+description: Akaunti UG — Smart Personal Finance Manager for Uganda
+version: 1.0.0+1
+publish_to: none
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+  flutter: ">=3.10.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # State management
+  provider: ^6.1.1
+
+  # HTTP / API
+  dio: ^5.4.0
+  retrofit: ^4.1.0
+
+  # Auth / Secure storage
+  flutter_secure_storage: ^9.0.0
+  local_auth: ^2.1.8                    # Biometric login
+
+  # Local database (offline-first)
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  sqflite: ^2.3.2                       # SQLite for structured offline data
+
+  # Charts
+  fl_chart: ^0.66.2
+
+  # Images / Receipt
+  image_picker: ^1.0.7
+  cached_network_image: ^3.3.1
+
+  # SMS detection (MoMo)
+  telephony: ^0.2.0
+
+  # Notifications (FCM)
+  firebase_core: ^2.27.0
+  firebase_messaging: ^14.7.20
+  flutter_local_notifications: ^16.3.0
+
+  # Date & formatting
+  intl: ^0.19.0
+
+  # Connectivity
+  connectivity_plus: ^5.0.2
+
+  # Other utilities
+  uuid: ^4.3.3
+  share_plus: ^7.2.2
+  url_launcher: ^6.2.5
+  shimmer: ^3.0.0                       # Loading skeletons
+  lottie: ^3.1.0                        # Animations
+  package_info_plus: ^5.0.1
+  path_provider: ^2.1.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.1
+  build_runner: ^2.4.8
+  hive_generator: ^2.0.1
+  retrofit_generator: ^8.1.0
+
+flutter:
+  uses-material-design: true

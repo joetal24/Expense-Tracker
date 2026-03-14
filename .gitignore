@@ -10,10 +10,23 @@ Akaunti_UG_Source_Code.zip
 Akaunti_UG_Technical_Architecture.docx
 akaunti_reference/
 
-# Keep only committed Flutter config; ignore extracted scaffold bulk
-mobile/flutter_app/android/
-mobile/flutter_app/lib/core/services/
-mobile/flutter_app/lib/core/theme/
+# Flutter build outputs
+mobile/flutter_app/build/
+.dart_tool/
+
+# Keep extracted Flutter bulk out of VCS; track only wiring starter files
 mobile/flutter_app/lib/features/
-mobile/flutter_app/lib/main.dart
-mobile/flutter_app/pubspec.yaml
+mobile/flutter_app/lib/core/theme/
+mobile/flutter_app/lib/core/services/
+mobile/flutter_app/android/**
+
+!mobile/flutter_app/lib/
+!mobile/flutter_app/lib/core/
+!mobile/flutter_app/lib/core/services/
+mobile/flutter_app/lib/core/services/sms_service.dart
+!mobile/flutter_app/lib/core/services/backend_api_service.dart
+!mobile/flutter_app/android/
+!mobile/flutter_app/android/app/
+!mobile/flutter_app/android/app/src/
+!mobile/flutter_app/android/app/src/main/
+!mobile/flutter_app/android/app/src/main/AndroidManifest.xml

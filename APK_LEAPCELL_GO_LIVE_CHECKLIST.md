@@ -95,6 +95,7 @@ Build with production API URL:
 
 ```bash
 cd mobile/flutter_app
+flutter create .
 flutter pub get
 flutter run --dart-define=API_BASE_URL=https://<your-leapcell-domain>/api/
 ```
