@@ -59,3 +59,91 @@ class FinanceFlowTests(TestCase):
 		self.assertTrue(
 			Transaction.objects.filter(account=account, kind=Transaction.Kind.LOAN, name='Business Loan').exists()
 		)
+
+
+class FinanceApiTests(TestCase):
+	def test_register_login_and_create_expense(self):
+		register_response = self.client.post(
+			reverse('api-register'),
+			{
+				'username': 'mobileuser',
+				'password': 'StrongPass123!',
+			},
+		)
+		self.assertEqual(register_response.status_code, 201)
+
+		login_response = self.client.post(
+			reverse('api-login'),
+			{
+				'username': 'mobileuser',
+				'password': 'StrongPass123!',
+			},
+		)
+		self.assertEqual(login_response.status_code, 200)
+		token = login_response.json()['access']
+
+		headers = {'HTTP_AUTHORIZATION': f'Bearer {token}'}
+
+		expense_response = self.client.post(
+			reverse('api-expenses'),
+			{
+				'name': 'Data bundles',
+				'amount': '12000',
+				'due_date': '2026-03-14',
+				'notes': 'Weekly internet',
+			},
+			**headers,
+		)
+		self.assertEqual(expense_response.status_code, 201)
+		self.assertEqual(expense_response.json()['kind'], Transaction.Kind.EXPENSE)
+
+		loan_response = self.client.post(
+			reverse('api-loans'),
+			{
+				'name': 'Emergency Loan',
+				'amount': '300000',
+				'interest_rate': '5.0',
+				'due_date': '2026-06-01',
+				'notes': 'Unexpected costs',
+			},
+			**headers,
+		)
+		self.assertEqual(loan_response.status_code, 201)
+		self.assertEqual(loan_response.json()['kind'], Transaction.Kind.LOAN)
+
+		sync_response = self.client.post(
+			reverse('api-sync'),
+			{
+				'expenses': [
+					{
+						'name': 'Market',
+						'amount': '45000',
+						'due_date': '2026-03-15',
+						'notes': 'Weekly food',
+					}
+				],
+				'loans': [
+					{
+						'name': 'Supplier Credit',
+						'amount': '200000',
+						'interest_rate': '3.5',
+						'due_date': '2026-07-01',
+						'notes': 'Inventory top up',
+					}
+				],
+			},
+			content_type='application/json',
+			**headers,
+		)
+		self.assertEqual(sync_response.status_code, 200)
+		self.assertEqual(sync_response.json()['synced_expenses'], 1)
+		self.assertEqual(sync_response.json()['synced_loans'], 1)
+
+		created_user = User.objects.get(username='mobileuser')
+		account = Account.objects.get(user=created_user)
+		self.assertEqual(account.transactions.expenses().count(), 2)
+		self.assertEqual(account.transactions.loans().count(), 2)
+
+		dashboard_response = self.client.get(reverse('api-dashboard'), **headers)
+		self.assertEqual(dashboard_response.status_code, 200)
+		self.assertIn('totals', dashboard_response.json())

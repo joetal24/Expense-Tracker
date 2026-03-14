@@ -21,6 +21,7 @@ from fin_manager.views import register
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', include('fin_manager.urls')),
+    path('api/', include('fin_manager.api_urls')),
     path('accounts/register/', register, name='register'),
     path('accounts/', include('django.contrib.auth.urls')),
 ]
