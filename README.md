@@ -79,3 +79,4 @@ Open: `http://127.0.0.1:8000/`
 
 - Supports `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and `DATABASE_URL`.
 - For container environments, use Gunicorn with `/tmp` worker temp dir as documented in `LEAPCELL_DEPLOY.md`.
+- For production release execution, follow `APK_LEAPCELL_GO_LIVE_CHECKLIST.md`.
