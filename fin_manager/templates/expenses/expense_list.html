@@ -110,18 +110,18 @@
                   <span class="item-name">{{ liability.name }}</span>
                   <span class="item-amount">UGX {{ liability.amount|floatformat:0|intcomma }}</span>
                 </div>
-                <div class="helper-text">End Date: {{ liability.end_date }}</div>
+                <div class="helper-text">Due Date: {{ liability.due_date }}</div>
               </li>
             {% endfor %}
           </ul>
         {% endfor %}
       {% else %}
-        <p class="empty-text">No expenses yet. Add your first liability.</p>
+        <p class="empty-text">No expenses yet. Add your first expense.</p>
       {% endif %}
     </section>
 
     <section class="card form-card">
-      <h2 class="title">Add Liability</h2>
+      <h2 class="title">Add Expense</h2>
       <form method="post">
         {% csrf_token %}
         {% for field in form %}
@@ -136,7 +136,7 @@
             {% endfor %}
           </p>
         {% endfor %}
-        <button type="submit" class="btn-primary">Add Liability</button>
+        <button type="submit" class="btn-primary">Add Expense</button>
       </form>
     </section>
   </div>

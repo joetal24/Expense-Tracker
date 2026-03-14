@@ -1,87 +1,81 @@
 # Finance Manager
 
-A simple personal finance tracker built with Django.
+A from-scratch Django finance tracker focused on clean architecture and deployment-ready defaults.
+
+## What was rebuilt
+
+- Replaced mixed legacy model design with a clear domain:
+  - `Account` (one account per user)
+  - `Transaction` (typed records: `expense` or `loan`)
+- Introduced a service layer in `fin_manager/services.py` for dashboard period summaries.
+- Refactored forms/views around the new domain model.
+- Simplified routing and standardized health check at `/healthz/`.
+- Updated admin configuration for operational visibility.
+
+## Core Architecture
+
+- **Domain layer**: `fin_manager/models.py`
+- **Application/service layer**: `fin_manager/services.py`
+- **Presentation layer**: `fin_manager/views.py` + templates
+- **Interface/API layer**: `fin_manager/urls.py`
+- **Ops/config layer**: `FinanceManager/settings.py`, Leapcell deployment docs
 
 ## Features
 
-- User registration and login/logout
-- Home dashboard
-- Expense/liability entry form
-- Expense list grouped by month
-- Admin panel for data management
+- User registration and authentication
+- Dashboard totals by weekly / monthly / yearly windows
+- Expense capture and list (grouped by month)
+- Loan capture and list (with interest rate)
+- Admin management for accounts and transactions
+- Health endpoint for platform probes
 
 ## Tech Stack
 
-- Python
-- Django
-- HTML/CSS
-- JavaScript
-- SQLite (default Django database)
+- Python 3.12+
+- Django 4.2
+- Gunicorn
+- SQLite (local) or Postgres via `DATABASE_URL`
 
-## Prerequisites
+## Local Setup
 
-- Python 3.10+ (recommended)
-- `uv`
+1. Create and activate virtual environment:
 
-## Installation
+```bash
+python -m venv .venv
+source .venv/bin/activate
+```
 
-1. Clone the repository and enter the project folder:
+2. Install dependencies:
 
-	```bash
-	git clone https://github.com/predystopic-dev/Finance-Manager.git
-	cd Finance-Manager
-	```
+```bash
+pip install -r requirements.txt
+```
 
-2. Create and activate a virtual environment:
+3. Apply migrations:
 
-	```bash
-	uv venv .venv
-	source .venv/bin/activate
-	```
+```bash
+python manage.py migrate
+```
 
-3. Install dependencies:
+4. Run the app:
 
-	```bash
-	uv pip install -r requirements.txt
-	```
+```bash
+python manage.py runserver
+```
 
-4. Apply migrations:
-
-	```bash
-	python manage.py migrate
-	```
-
-5. (Optional) Create an admin user:
-
-	```bash
-	python manage.py createsuperuser
-	```
-
-6. Run the development server:
-
-	```bash
-	python manage.py runserver
-	```
-
-7. Open the app in your browser:
-
-	```
-	http://127.0.0.1:8000/
-	```
+Open: `http://127.0.0.1:8000/`
 
 ## Routes
 
-- `/` - Home
-- `/expenses/` - Expense page
-- `/accounts/login/` - Login
-- `/accounts/register/` - Register
-- `/admin/` - Django admin
+- `/` dashboard/home
+- `/expenses/` expense list + create
+- `/loans/` loan list + create
+- `/accounts/login/` login
+- `/accounts/register/` registration
+- `/healthz/` health probe
+- `/admin/` Django admin
 
-## Notes
+## Deployment Notes
 
-- The project uses SQLite by default (`db.sqlite3`).
-- Authentication routes are provided by `django.contrib.auth.urls`.
-
-## Repository
-
-- GitHub: https://github.com/predystopic-dev/Finance-Manager
+- Supports `DJANGO_SECRET_KEY`, `DJANGO_DEBUG`, `DJANGO_ALLOWED_HOSTS`, and `DATABASE_URL`.
+- For container environments, use Gunicorn with `/tmp` worker temp dir as documented in `LEAPCELL_DEPLOY.md`.

@@ -1,14 +1,15 @@
-from django.shortcuts import render, redirect
-from django.http import HttpResponse
+from collections import defaultdict
+
 from django.contrib.auth import login
-from django.contrib.auth.forms import UserCreationForm
-from django.db.models import Sum
-from django.utils import timezone
-from datetime import timedelta
-from .models import Account, Liability
-from .forms import ExpenseForm, LoanForm
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import redirect, render
+from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
+from .forms import ExpenseForm, LoanForm, RegisterForm
+from .models import Account, Transaction
+from .services import build_dashboard_summary
 
 # Create your views here.
 
@@ -18,148 +19,102 @@ def home(request):
     if not request.user.is_authenticated:
         return render(request, 'fin_manager/home.html', {'user': request.user})
 
-    today = timezone.localdate()
-    week_start = today - timedelta(days=today.weekday())
-    week_end = week_start + timedelta(days=6)
+    account, _ = Account.objects.get_or_create(
+        user=request.user,
+        defaults={'name': f'{request.user.username} Main Account'}
+    )
 
-    month_start = today.replace(day=1)
-    next_month = (month_start.replace(day=28) + timedelta(days=4)).replace(day=1)
-    month_end = next_month - timedelta(days=1)
-
-    year_start = today.replace(month=1, day=1)
-    year_end = today.replace(month=12, day=31)
-
-    user_liabilities = Liability.objects.filter(user=request.user)
-    expense_qs = user_liabilities.filter(is_loan=False)
-    loan_qs = user_liabilities.filter(is_loan=True)
-
-    def sum_for_period(queryset, start_date, end_date):
-        total = queryset.filter(end_date__range=(start_date, end_date)).aggregate(total=Sum('amount'))['total']
-        return total or 0
-
-    totals = {
-        'weekly': {
-            'expenses': sum_for_period(expense_qs, week_start, week_end),
-            'loans': sum_for_period(loan_qs, week_start, week_end),
-        },
-        'monthly': {
-            'expenses': sum_for_period(expense_qs, month_start, month_end),
-            'loans': sum_for_period(loan_qs, month_start, month_end),
-        },
-        'yearly': {
-            'expenses': sum_for_period(expense_qs, year_start, year_end),
-            'loans': sum_for_period(loan_qs, year_start, year_end),
-        },
-    }
-
-    periods = {
-        'weekly': f"{week_start.strftime('%b %d')} - {week_end.strftime('%b %d, %Y')}",
-        'monthly': f"{month_start.strftime('%b %d')} - {month_end.strftime('%b %d, %Y')}",
-        'yearly': f"{year_start.strftime('%b %d')} - {year_end.strftime('%b %d, %Y')}",
-    }
+    dashboard = build_dashboard_summary(account)
 
     context = {
         'user': request.user,
-        'totals': totals,
-        'periods': periods,
+        'account': account,
+        'totals': dashboard['totals'],
+        'periods': dashboard['periods'],
     }
     return render(request, 'fin_manager/home.html', context)
 
 
 def register(request):
     if request.method == 'POST':
-        form = UserCreationForm(request.POST)
+        form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save()
-            # Log the user in
             login(request, user)
-            return redirect('home')  # Change 'home' to your desired URL
+            Account.objects.get_or_create(
+                user=user,
+                defaults={'name': f'{user.username} Main Account'}
+            )
+            return redirect('home')
     else:
-        form = UserCreationForm()
+        form = RegisterForm()
     return render(request, 'registration/register.html', {'form': form})
 
 
-def loans(request):
-    if not request.user.is_authenticated:
-        return redirect('login')
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ExpenseListView(FormView):
+    template_name = 'expenses/expense_list.html'
+    form_class = ExpenseForm
+    success_url = '/expenses/'
 
-    if request.method == 'POST':
-        form = LoanForm(request.POST)
-        if form.is_valid():
-            account, _ = Account.objects.get_or_create(
-                user=request.user,
-                defaults={'name': f'{request.user.username} Account'}
-            )
+    def form_valid(self, form):
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'}
+        )
 
-            liability = Liability(
-                name=form.cleaned_data['name'],
-                amount=form.cleaned_data['amount'],
-                interest_rate=form.cleaned_data['interest_rate'],
-                is_loan=True,
-                end_date=form.cleaned_data['end_date'],
-                user=request.user
-            )
-            liability.save()
-            account.liability_list.add(liability)
-            return redirect('loans')
-    else:
-        form = LoanForm()
+        transaction = form.save(commit=False)
+        transaction.account = account
+        transaction.kind = Transaction.Kind.EXPENSE
+        transaction.interest_rate = None
+        transaction.save()
+        return super().form_valid(form)
 
-    user_loans = Liability.objects.filter(user=request.user, is_loan=True)
-    return render(request, 'fin_manager/loans.html', {'loans': user_loans, 'form': form})
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'}
+        )
+
+        grouped = defaultdict(list)
+        expenses = account.transactions.expenses().order_by('-due_date')
+
+        for expense in expenses:
+            key = expense.due_date.strftime('%Y-%m')
+            grouped[key].append(expense)
+
+        context['expense_data'] = dict(grouped)
+        return context
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class LoanListView(FormView):
+    template_name = 'fin_manager/loans.html'
+    form_class = LoanForm
+    success_url = '/loans/'
+
+    def form_valid(self, form):
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'}
+        )
+
+        transaction = form.save(commit=False)
+        transaction.account = account
+        transaction.kind = Transaction.Kind.LOAN
+        transaction.save()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'}
+        )
+        context['loans'] = account.transactions.loans().order_by('-due_date')
+        return context
 
 
 def healthcheck(request):
     return HttpResponse('ok', content_type='text/plain')
-
-
-class ExpenseListView(FormView):
-    template_name = 'expenses/expense_list.html'
-    form_class = ExpenseForm
-    success_url = '/expenses/'  # Update this with the correct URL
-
-    def form_valid(self, form):
-        # Retrieve the user's account
-        account, _ = Account.objects.get_or_create(
-            user=self.request.user,
-            defaults={'name': f'{self.request.user.username} Account'}
-        )
-        
-        # Create a new liability instance and link it to the user's account
-        liability = Liability(
-            name=form.cleaned_data['name'],
-            amount=form.cleaned_data['amount'],
-            is_loan=False,
-            end_date=form.cleaned_data['end_date'],
-            user=self.request.user
-        )
-        liability.save()
-        account.liability_list.add(liability)
-        return super().form_valid(form)
-    
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        # Retrieve user's account data and related liabilities
-        accounts = Account.objects.filter(user=user)
-        print(accounts)
-        # Create a dictionary to store expense data grouped by month
-        expense_data = {}
-
-        for account in accounts:
-            liabilities = account.liability_list.filter(is_loan=False)
-            for liability in liabilities:
-                year_month = liability.end_date.strftime('%Y-%m')
-
-                if year_month not in expense_data:
-                    expense_data[year_month] = []
-
-                expense_data[year_month].append({
-                    'name': liability.name,
-                    'amount': liability.amount,
-                    'end_date': liability.end_date,
-                })
-        
-        context['expense_data'] = expense_data
-        return context
