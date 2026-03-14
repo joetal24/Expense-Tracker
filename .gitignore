@@ -1,0 +1,19 @@
+# Python cache/runtime artifacts
+__pycache__/
+*.py[cod]
+
+# Local runtime outputs
+media/
+
+# Local extracted Akaunti reference assets (kept out of VCS)
+Akaunti_UG_Source_Code.zip
+Akaunti_UG_Technical_Architecture.docx
+akaunti_reference/
+
+# Keep only committed Flutter config; ignore extracted scaffold bulk
+mobile/flutter_app/android/
+mobile/flutter_app/lib/core/services/
+mobile/flutter_app/lib/core/theme/
+mobile/flutter_app/lib/features/
+mobile/flutter_app/lib/main.dart
+mobile/flutter_app/pubspec.yaml
