@@ -1,4 +1,9 @@
+from datetime import date
+
 from django.contrib.auth.models import User
+from django.db.models import Count, Sum
+from django.db.models.functions import TruncDay, TruncMonth
+from django.utils import timezone
 from rest_framework import generics, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -6,13 +11,28 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
 from .api_serializers import (
     AccountSerializer,
+    CategorySerializer,
     DashboardSerializer,
     ExpenseSerializer,
+    IncomeSerializer,
     LoanSerializer,
     RegisterSerializer,
     SyncPayloadSerializer,
 )
 from .models import Account, Transaction
+
+
+DEFAULT_CATEGORIES = [
+    {'id': 'transport', 'name': 'Transport', 'category_type': 'expense'},
+    {'id': 'food', 'name': 'Food', 'category_type': 'expense'},
+    {'id': 'housing', 'name': 'Housing', 'category_type': 'expense'},
+    {'id': 'utilities', 'name': 'Utilities', 'category_type': 'expense'},
+    {'id': 'health', 'name': 'Health', 'category_type': 'expense'},
+    {'id': 'salary', 'name': 'Salary', 'category_type': 'income'},
+    {'id': 'business', 'name': 'Business', 'category_type': 'income'},
+    {'id': 'farming', 'name': 'Farming', 'category_type': 'income'},
+    {'id': 'other', 'name': 'Other', 'category_type': 'both'},
+]
 
 
 class RegisterAPIView(generics.CreateAPIView):
@@ -56,6 +76,14 @@ class AccountAPIView(generics.RetrieveUpdateAPIView):
             defaults={'name': f'{self.request.user.username} Main Account'},
         )
         return account
+
+
+class CategoryListAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        serializer = CategorySerializer(DEFAULT_CATEGORIES, many=True)
+        return Response(serializer.data)
 
 
 class ExpenseListCreateAPIView(generics.ListCreateAPIView):
@@ -108,6 +136,31 @@ class LoanListCreateAPIView(generics.ListCreateAPIView):
         return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
+class IncomeListCreateAPIView(generics.ListCreateAPIView):
+    serializer_class = IncomeSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'},
+        )
+        return account.transactions.incomes().order_by('-due_date', '-created_at')
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        account, _ = Account.objects.get_or_create(
+            user=request.user,
+            defaults={'name': f'{request.user.username} Main Account'},
+        )
+
+        serializer.save(account=account, kind=Transaction.Kind.INCOME, interest_rate=None)
+        headers = self.get_success_headers(serializer.data)
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
+
+
 class SyncAPIView(APIView):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -133,6 +186,19 @@ class SyncAPIView(APIView):
             )
             synced_expenses.append(transaction.id)
 
+        synced_incomes = []
+        for income_data in serializer.validated_data.get('incomes', []):
+            payload = dict(income_data)
+            payload.pop('kind', None)
+            payload.pop('interest_rate', None)
+            transaction = Transaction.objects.create(
+                account=account,
+                kind=Transaction.Kind.INCOME,
+                interest_rate=None,
+                **payload,
+            )
+            synced_incomes.append(transaction.id)
+
         synced_loans = []
         for loan_data in serializer.validated_data.get('loans', []):
             payload = dict(loan_data)
@@ -148,9 +214,105 @@ class SyncAPIView(APIView):
             {
                 'status': 'synced',
                 'synced_expenses': len(synced_expenses),
+                'synced_incomes': len(synced_incomes),
                 'synced_loans': len(synced_loans),
             }
         )
+
+
+class ReportMonthlyAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        account, _ = Account.objects.get_or_create(
+            user=request.user,
+            defaults={'name': f'{request.user.username} Main Account'},
+        )
+
+        today = timezone.localdate()
+        year = int(request.query_params.get('year', today.year))
+        month = int(request.query_params.get('month', today.month))
+
+        start = date(year, month, 1)
+        if month == 12:
+            end = date(year + 1, 1, 1)
+        else:
+            end = date(year, month + 1, 1)
+
+        transactions = account.transactions.filter(due_date__gte=start, due_date__lt=end)
+        expenses = transactions.expenses()
+        incomes = transactions.incomes()
+
+        total_expense = expenses.total_amount()
+        total_income = incomes.total_amount()
+        net_savings = total_income - total_expense
+
+        category_breakdown = list(
+            expenses.values('name').annotate(total=Sum('amount'), count=Count('id')).order_by('-total')
+        )
+
+        daily_totals = list(
+            expenses.annotate(day=TruncDay('due_date')).values('day').annotate(total=Sum('amount')).order_by('day')
+        )
+
+        savings_rate = 0.0
+        if total_income > 0:
+            savings_rate = round(float((net_savings / total_income) * 100), 1)
+
+        return Response(
+            {
+                'year': year,
+                'month': month,
+                'total_expense': total_expense,
+                'total_income': total_income,
+                'net_savings': net_savings,
+                'savings_rate': savings_rate,
+                'category_breakdown': category_breakdown,
+                'daily_totals': [
+                    {'date': row['day'].isoformat(), 'amount': row['total']} for row in daily_totals
+                ],
+            }
+        )
+
+
+class ReportTrendsAPIView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        account, _ = Account.objects.get_or_create(
+            user=request.user,
+            defaults={'name': f'{request.user.username} Main Account'},
+        )
+
+        expenses = list(
+            account.transactions.expenses()
+            .annotate(month=TruncMonth('due_date'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+        incomes = list(
+            account.transactions.incomes()
+            .annotate(month=TruncMonth('due_date'))
+            .values('month')
+            .annotate(total=Sum('amount'))
+            .order_by('month')
+        )
+
+        expense_by_month = {row['month']: row['total'] for row in expenses}
+        income_by_month = {row['month']: row['total'] for row in incomes}
+        months = sorted(set(expense_by_month.keys()) | set(income_by_month.keys()))[-6:]
+
+        trends = [
+            {
+                'month': month.strftime('%b %Y'),
+                'expenses': expense_by_month.get(month, 0),
+                'income': income_by_month.get(month, 0),
+            }
+            for month in months
+        ]
+
+        return Response({'trends': trends})
 
 
 class DashboardAPIView(APIView):

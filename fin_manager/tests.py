@@ -97,6 +97,23 @@ class FinanceApiTests(TestCase):
 		self.assertEqual(expense_response.status_code, 201)
 		self.assertEqual(expense_response.json()['kind'], Transaction.Kind.EXPENSE)
 
+		categories_response = self.client.get(reverse('api-categories'), **headers)
+		self.assertEqual(categories_response.status_code, 200)
+		self.assertGreater(len(categories_response.json()), 0)
+
+		income_response = self.client.post(
+			reverse('api-income'),
+			{
+				'name': 'Monthly Salary',
+				'amount': '1200000',
+				'due_date': '2026-03-10',
+				'notes': 'March payroll',
+			},
+			**headers,
+		)
+		self.assertEqual(income_response.status_code, 201)
+		self.assertEqual(income_response.json()['kind'], Transaction.Kind.INCOME)
+
 		loan_response = self.client.post(
 			reverse('api-loans'),
 			{
@@ -122,6 +139,14 @@ class FinanceApiTests(TestCase):
 						'notes': 'Weekly food',
 					}
 				],
+				'incomes': [
+					{
+						'name': 'Farm Sale',
+						'amount': '600000',
+						'due_date': '2026-03-16',
+						'notes': 'Maize sale',
+					}
+				],
 				'loans': [
 					{
 						'name': 'Supplier Credit',
@@ -137,12 +162,22 @@ class FinanceApiTests(TestCase):
 		)
 		self.assertEqual(sync_response.status_code, 200)
 		self.assertEqual(sync_response.json()['synced_expenses'], 1)
+		self.assertEqual(sync_response.json()['synced_incomes'], 1)
 		self.assertEqual(sync_response.json()['synced_loans'], 1)
 
 		created_user = User.objects.get(username='mobileuser')
 		account = Account.objects.get(user=created_user)
 		self.assertEqual(account.transactions.expenses().count(), 2)
+		self.assertEqual(account.transactions.incomes().count(), 2)
 		self.assertEqual(account.transactions.loans().count(), 2)
+
+		monthly_report = self.client.get(reverse('api-report-monthly'), {'year': 2026, 'month': 3}, **headers)
+		self.assertEqual(monthly_report.status_code, 200)
+		self.assertIn('total_income', monthly_report.json())
+
+		trend_report = self.client.get(reverse('api-report-trends'), **headers)
+		self.assertEqual(trend_report.status_code, 200)
+		self.assertIn('trends', trend_report.json())
 
 		dashboard_response = self.client.get(reverse('api-dashboard'), **headers)
 		self.assertEqual(dashboard_response.status_code, 200)

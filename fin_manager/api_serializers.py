@@ -28,6 +28,12 @@ class AccountSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
 
 
+class CategorySerializer(serializers.Serializer):
+    id = serializers.CharField()
+    name = serializers.CharField()
+    category_type = serializers.ChoiceField(choices=['expense', 'income', 'both'])
+
+
 class TransactionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Transaction
@@ -70,8 +76,22 @@ class LoanSerializer(TransactionSerializer):
         return attrs
 
 
+class IncomeSerializer(TransactionSerializer):
+    class Meta(TransactionSerializer.Meta):
+        extra_kwargs = {
+            'kind': {'read_only': True},
+            'interest_rate': {'required': False, 'allow_null': True},
+        }
+
+    def validate(self, attrs):
+        attrs['kind'] = Transaction.Kind.INCOME
+        attrs['interest_rate'] = None
+        return attrs
+
+
 class SyncPayloadSerializer(serializers.Serializer):
     expenses = ExpenseSerializer(many=True, required=False)
+    incomes = IncomeSerializer(many=True, required=False)
     loans = LoanSerializer(many=True, required=False)
 
 

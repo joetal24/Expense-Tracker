@@ -22,6 +22,9 @@ class TransactionQuerySet(models.QuerySet):
     def expenses(self):
         return self.filter(kind=Transaction.Kind.EXPENSE)
 
+    def incomes(self):
+        return self.filter(kind=Transaction.Kind.INCOME)
+
     def loans(self):
         return self.filter(kind=Transaction.Kind.LOAN)
 
@@ -36,6 +39,7 @@ class TransactionQuerySet(models.QuerySet):
 class Transaction(models.Model):
     class Kind(models.TextChoices):
         EXPENSE = 'expense', 'Expense'
+        INCOME = 'income', 'Income'
         LOAN = 'loan', 'Loan'
 
     account = models.ForeignKey(Account, on_delete=models.CASCADE, related_name='transactions')
