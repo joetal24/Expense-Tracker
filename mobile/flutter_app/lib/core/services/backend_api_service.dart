@@ -57,14 +57,52 @@ class BackendApiService {
   Future<Map<String, dynamic>> getDashboard(String accessToken) async {
     final response = await _dio.get(
       'dashboard/',
-      options: Options(
-        headers: {
-          'Authorization': 'Bearer $accessToken',
-        },
-      ),
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
     );
-
     return _asMap(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> getExpenses(String accessToken) async {
+    final response = await _dio.get(
+      'transactions/',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    final data = response.data;
+    if (data is List) {
+      return data.map((e) => _asMap(e)).toList();
+    }
+    // DRF paginated response
+    if (data is Map && data['results'] is List) {
+      return (data['results'] as List).map((e) => _asMap(e)).toList();
+    }
+    return [];
+  }
+
+  Future<Map<String, dynamic>> addExpense(
+    String accessToken,
+    Map<String, dynamic> data,
+  ) async {
+    final response = await _dio.post(
+      'transactions/',
+      data: data,
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    return _asMap(response.data);
+  }
+
+  Future<List<Map<String, dynamic>>> getAccounts(String accessToken) async {
+    final response = await _dio.get(
+      'accounts/',
+      options: Options(headers: {'Authorization': 'Bearer $accessToken'}),
+    );
+    final data = response.data;
+    if (data is List) {
+      return data.map((e) => _asMap(e)).toList();
+    }
+    if (data is Map && data['results'] is List) {
+      return (data['results'] as List).map((e) => _asMap(e)).toList();
+    }
+    return [];
   }
 
   Map<String, dynamic> _asMap(dynamic input) {
