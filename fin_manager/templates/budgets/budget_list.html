@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Budgets{% endblock %}
+
+{% block extra_styles %}
+  <style>
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+
+    .budget-list {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 14px;
+    }
+
+    .budget-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .budget-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .budget-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .budget-name {
+      font-weight: 700;
+      color: #0f172a;
+    }
+
+    .budget-amount {
+      font-weight: 700;
+      color: #1d4ed8;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .progress-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+      margin-top: 8px;
+    }
+
+    .progress-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+    }
+
+    .progress-fill.warning {
+      background: linear-gradient(90deg, #f59e0b, #f97316);
+    }
+
+    .progress-fill.over {
+      background: linear-gradient(90deg, #dc2626, #ef4444);
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-btn {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 6px 9px;
+      text-decoration: none;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .action-edit {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .action-delete {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .form-card p {
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .form-card label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .form-card input,
+    .form-card select,
+    .form-card textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .form-card input:focus,
+    .form-card select:focus,
+    .form-card textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+    }
+
+    @media (max-width: 900px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="layout-grid">
+    <section class="card">
+      <h1 class="title">Budgets</h1>
+      <p class="subtitle">Track spending against your defined limits.</p>
+
+      {% if budget_items %}
+        <ul class="budget-list">
+          {% for item in budget_items %}
+            <li class="budget-item">
+              <div class="budget-row">
+                <div class="budget-main">
+                  <div class="budget-name">{{ item.budget.name }}</div>
+                  <div class="helper-text">
+                    {% if item.budget.category %}{{ item.budget.category }} • {% endif %}
+                    {{ item.budget.start_date }} - {{ item.budget.end_date }} •
+                    Threshold {{ item.budget.alert_threshold }}%
+                  </div>
+                </div>
+                <span class="budget-amount">UGX {{ item.budget.amount|floatformat:0|intcomma }}</span>
+                <div class="item-actions">
+                  <a class="action-btn action-edit" href="{% url 'budget_edit' item.budget.pk %}">Edit</a>
+                  <a class="action-btn action-delete" href="{% url 'budget_delete' item.budget.pk %}">Delete</a>
+                </div>
+              </div>
+
+              <div class="helper-text" style="margin-top:6px;">
+                Spent: UGX {{ item.spent|floatformat:0|intcomma }} •
+                Remaining: UGX {{ item.remaining|floatformat:0|intcomma }}
+              </div>
+              <div class="progress-track">
+                <div class="progress-fill {% if item.is_over %}over{% elif item.is_warning %}warning{% endif %}" style="width: {{ item.progress }}%;"></div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="helper-text">No budgets yet. Create your first budget.</p>
+      {% endif %}
+    </section>
+
+    <section class="card form-card">
+      <h2 class="title">Add Budget</h2>
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+          <p>
+            {{ field.label_tag }}
+            {{ field }}
+            {% for error in field.errors %}
+              <div class="error-box">{{ error }}</div>
+            {% endfor %}
+          </p>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Save Budget</button>
+      </form>
+    </section>
+  </div>
+{% endblock %}

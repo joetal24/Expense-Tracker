@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Reports{% endblock %}
+
+{% block extra_styles %}
+  <style>
+    .filters-row {
+      display: flex;
+      gap: 10px;
+      align-items: end;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 0.84rem;
+      font-weight: 700;
+      color: #334155;
+      margin-bottom: 6px;
+    }
+
+    .filter-group select {
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 9px 11px;
+      background: #fff;
+      min-width: 140px;
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .summary-label {
+      color: #475569;
+      font-size: 0.82rem;
+      font-weight: 700;
+      margin-bottom: 3px;
+    }
+
+    .summary-value {
+      color: #0f172a;
+      font-size: 1.08rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1.1fr 1fr;
+      gap: 16px;
+    }
+
+    .panel {
+      background: #fff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .panel-title {
+      font-size: 0.95rem;
+      color: #1e3a8a;
+      font-weight: 800;
+      margin-bottom: 10px;
+    }
+
+    .bar-row {
+      margin-bottom: 9px;
+    }
+
+    .bar-head {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 4px;
+      color: #334155;
+      font-size: 0.82rem;
+      font-weight: 700;
+      gap: 8px;
+    }
+
+    .bar-track {
+      height: 9px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+    }
+
+    .mini-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.86rem;
+    }
+
+    .mini-table th,
+    .mini-table td {
+      padding: 8px 6px;
+      border-bottom: 1px solid #e2e8f0;
+      text-align: left;
+    }
+
+    .mini-table th {
+      color: #64748b;
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    .amount-right {
+      text-align: right;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+      font-weight: 700;
+    }
+
+    @media (max-width: 960px) {
+      .summary-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .section-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <section class="card">
+    <h1 class="title">Reports</h1>
+    <p class="subtitle">Monthly performance and 6-month trend overview.</p>
+
+    <form method="get" class="filters-row">
+      <div class="filter-group">
+        <label>Month</label>
+        <select name="month">
+          {% for value, name in month_options %}
+            <option value="{{ value }}" {% if value == selected_month %}selected{% endif %}>{{ name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label>Year</label>
+        <select name="year">
+          {% for y in year_options %}
+            <option value="{{ y }}" {% if y == selected_year %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit" class="btn-primary" style="width:auto; padding:10px 16px;">Apply</button>
+    </form>
+
+    <div class="summary-grid">
+      <article class="summary-card">
+        <div class="summary-label">Month</div>
+        <div class="summary-value">{{ month_label }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-label">Income</div>
+        <div class="summary-value">UGX {{ total_income|floatformat:0|intcomma }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-label">Expense + Loans</div>
+        <div class="summary-value">UGX {{ total_expense|add:total_loans|floatformat:0|intcomma }}</div>
+      </article>
+      <article class="summary-card">
+        <div class="summary-label">Net</div>
+        <div class="summary-value">UGX {{ net|floatformat:0|intcomma }}</div>
+      </article>
+    </div>
+
+    <div class="section-grid">
+      <section class="panel">
+        <h2 class="panel-title">Top Expense Categories</h2>
+        {% if category_breakdown %}
+          {% for row in category_breakdown %}
+            <div class="bar-row">
+              <div class="bar-head">
+                <span>{{ row.name }}</span>
+                <span>UGX {{ row.total|floatformat:0|intcomma }}</span>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill" style="width:{% widthratio row.total category_breakdown.0.total 100 %}%;"></div>
+              </div>
+            </div>
+          {% endfor %}
+        {% else %}
+          <p class="helper-text">No expense data in this period.</p>
+        {% endif %}
+      </section>
+
+      <section class="panel">
+        <h2 class="panel-title">6-Month Trends</h2>
+        {% if trends %}
+          <table class="mini-table">
+            <thead>
+              <tr>
+                <th>Month</th>
+                <th class="amount-right">Income</th>
+                <th class="amount-right">Expenses</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in trends %}
+                <tr>
+                  <td>{{ t.month }}</td>
+                  <td class="amount-right">UGX {{ t.income|floatformat:0|intcomma }}</td>
+                  <td class="amount-right">UGX {{ t.expenses|floatformat:0|intcomma }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="helper-text">No trend data yet.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <section class="panel" style="margin-top: 16px;">
+      <h2 class="panel-title">Daily Expense Totals ({{ month_label }})</h2>
+      {% if daily_expense %}
+        <table class="mini-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th class="amount-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in daily_expense %}
+              <tr>
+                <td>{{ row.day|date:'Y-m-d' }}</td>
+                <td class="amount-right">UGX {{ row.total|floatformat:0|intcomma }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="helper-text">No daily expenses to display for this month.</p>
+      {% endif %}
+    </section>
+  </section>
+{% endblock %}

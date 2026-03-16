@@ -243,6 +243,8 @@
           <a href="{% url 'home' %}" class="nav-item {% if request.path == '/' %}active{% endif %}">Dashboard</a>
           <a href="{% url 'expenses' %}" class="nav-item {% if request.path|slice:':10' == '/expenses/' %}active{% endif %}">Expenses</a>
           <a href="{% url 'loans' %}" class="nav-item {% if request.path|slice:':7' == '/loans/' %}active{% endif %}">Loans</a>
+          <a href="{% url 'budgets' %}" class="nav-item {% if request.path|slice:':9' == '/budgets/' %}active{% endif %}">Budgets</a>
+          <a href="{% url 'reports' %}" class="nav-item {% if request.path|slice:':9' == '/reports/' %}active{% endif %}">Reports</a>
         </nav>
       </aside>
       <main class="app-main">
