@@ -155,6 +155,17 @@
             {% endfor %}
           </ul>
         {% endfor %}
+        {% if page_obj %}
+          <div style="margin-top: 18px; display: flex; gap: 8px;">
+            {% if page_obj.has_previous %}
+              <a href="?page={{ page_obj.previous_page_number }}" class="btn-primary" style="width:auto;">Previous</a>
+            {% endif %}
+            <span style="align-self:center; color:#1d4ed8; font-weight:600;">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}
+              <a href="?page={{ page_obj.next_page_number }}" class="btn-primary" style="width:auto;">Next</a>
+            {% endif %}
+          </div>
+        {% endif %}
       {% else %}
         <p class="empty-text">No expenses yet. Add your first expense.</p>
       {% endif %}

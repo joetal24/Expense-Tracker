@@ -10,7 +10,9 @@ from django.db.models.functions import TruncDay, TruncMonth
 from django.http import HttpResponse
 from django.urls import reverse_lazy
 from django.shortcuts import redirect, render
+from django.contrib import messages
 from django.views.generic import DeleteView, UpdateView
+from django.core.paginator import Paginator
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
@@ -97,7 +99,10 @@ class ExpenseListView(FormView):
         transaction.kind = Transaction.Kind.EXPENSE
         transaction.interest_rate = None
         transaction.save()
+        messages.success(self.request, 'Expense added successfully!')
         return super().form_valid(form)
+
+    from django.core.paginator import Paginator
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -109,11 +114,19 @@ class ExpenseListView(FormView):
         grouped = defaultdict(list)
         expenses = account.transactions.expenses().order_by('-due_date')
 
-        for expense in expenses:
+        # Flatten all expenses for pagination
+        all_expenses = list(expenses)
+        paginator = Paginator(all_expenses, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        # Regroup only the paginated expenses
+        for expense in page_obj:
             key = expense.due_date.strftime('%Y-%m')
             grouped[key].append(expense)
 
         context['expense_data'] = dict(grouped)
+        context['page_obj'] = page_obj
         return context
 
 
@@ -135,6 +148,7 @@ class ExpenseUpdateView(UpdateView):
         transaction.kind = Transaction.Kind.EXPENSE
         transaction.interest_rate = None
         transaction.save()
+        messages.success(self.request, 'Expense updated successfully!')
         return super().form_valid(form)
 
 
@@ -149,6 +163,10 @@ class ExpenseDeleteView(DeleteView):
             account__user=self.request.user,
             kind=Transaction.Kind.EXPENSE,
         )
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Expense deleted successfully!')
+        return super().delete(request, *args, **kwargs)
 
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
@@ -167,7 +185,10 @@ class LoanListView(FormView):
         transaction.account = account
         transaction.kind = Transaction.Kind.LOAN
         transaction.save()
+        messages.success(self.request, 'Loan added successfully!')
         return super().form_valid(form)
+
+    from django.core.paginator import Paginator
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -175,7 +196,12 @@ class LoanListView(FormView):
             user=self.request.user,
             defaults={'name': f'{self.request.user.username} Main Account'}
         )
-        context['loans'] = account.transactions.loans().order_by('-due_date')
+        loans = account.transactions.loans().order_by('-due_date')
+        paginator = Paginator(loans, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context['loans'] = page_obj
+        context['page_obj'] = page_obj
         return context
 
 
@@ -196,6 +222,7 @@ class LoanUpdateView(UpdateView):
         transaction = form.save(commit=False)
         transaction.kind = Transaction.Kind.LOAN
         transaction.save()
+        messages.success(self.request, 'Loan updated successfully!')
         return super().form_valid(form)
 
 
@@ -210,6 +237,10 @@ class LoanDeleteView(DeleteView):
             account__user=self.request.user,
             kind=Transaction.Kind.LOAN,
         )
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Loan deleted successfully!')
+        return super().delete(request, *args, **kwargs)
 
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
@@ -229,7 +260,10 @@ class IncomeListView(FormView):
         transaction.kind = Transaction.Kind.INCOME
         transaction.interest_rate = None
         transaction.save()
+        messages.success(self.request, 'Income added successfully!')
         return super().form_valid(form)
+
+    from django.core.paginator import Paginator
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -237,7 +271,12 @@ class IncomeListView(FormView):
             user=self.request.user,
             defaults={'name': f'{self.request.user.username} Main Account'}
         )
-        context['incomes'] = account.transactions.incomes().order_by('-due_date')
+        incomes = account.transactions.incomes().order_by('-due_date')
+        paginator = Paginator(incomes, 10)
+        page_number = self.request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        context['incomes'] = page_obj
+        context['page_obj'] = page_obj
         return context
 
 
@@ -259,6 +298,7 @@ class IncomeUpdateView(UpdateView):
         transaction.kind = Transaction.Kind.INCOME
         transaction.interest_rate = None
         transaction.save()
+        messages.success(self.request, 'Income updated successfully!')
         return super().form_valid(form)
 
 
@@ -273,6 +313,10 @@ class IncomeDeleteView(DeleteView):
             account__user=self.request.user,
             kind=Transaction.Kind.INCOME,
         )
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(self.request, 'Income deleted successfully!')
+        return super().delete(request, *args, **kwargs)
 
 
 @method_decorator(login_required(login_url='login'), name='dispatch')

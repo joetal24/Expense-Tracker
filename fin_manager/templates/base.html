@@ -252,6 +252,15 @@
   {% else %}
       <main class="{% block main_class %}page-shell{% endblock %}">
   {% endif %}
+        {% if messages %}
+          <div style="margin-bottom: 18px;">
+            {% for message in messages %}
+              <div style="padding: 12px 18px; border-radius: 8px; margin-bottom: 8px; font-weight: 600; font-size: 1rem; color: #166534; background: #dcfce7; border: 1px solid #bbf7d0;">
+                {{ message }}
+              </div>
+            {% endfor %}
+          </div>
+        {% endif %}
         {% block content %}{% endblock %}
       </main>
   {% if request.user.is_authenticated %}
