@@ -1,5 +1,9 @@
 {
     "chat.tools.terminal.autoApprove": {
-        "/home/joel/Documents/GitHub/Expense-Tracker/.venv/bin/python": true
+        "/home/joel/Documents/GitHub/Expense-Tracker/.venv/bin/python": true,
+        "/^source \\.venv/bin/activate && python manage\\.py check$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
     }
 }

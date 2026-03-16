@@ -14,7 +14,7 @@ from django.views.generic import DeleteView, UpdateView
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
-from .forms import BudgetForm, ExpenseForm, LoanForm, RegisterForm
+from .forms import BudgetForm, ExpenseForm, IncomeForm, LoanForm, RegisterForm
 from .models import Account, Budget, Transaction
 from .services import build_dashboard_summary
 
@@ -209,6 +209,69 @@ class LoanDeleteView(DeleteView):
         return Transaction.objects.filter(
             account__user=self.request.user,
             kind=Transaction.Kind.LOAN,
+        )
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class IncomeListView(FormView):
+    template_name = 'fin_manager/incomes.html'
+    form_class = IncomeForm
+    success_url = reverse_lazy('incomes')
+
+    def form_valid(self, form):
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'}
+        )
+
+        transaction = form.save(commit=False)
+        transaction.account = account
+        transaction.kind = Transaction.Kind.INCOME
+        transaction.interest_rate = None
+        transaction.save()
+        return super().form_valid(form)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        account, _ = Account.objects.get_or_create(
+            user=self.request.user,
+            defaults={'name': f'{self.request.user.username} Main Account'}
+        )
+        context['incomes'] = account.transactions.incomes().order_by('-due_date')
+        return context
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class IncomeUpdateView(UpdateView):
+    model = Transaction
+    form_class = IncomeForm
+    template_name = 'fin_manager/income_edit.html'
+    success_url = reverse_lazy('incomes')
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account__user=self.request.user,
+            kind=Transaction.Kind.INCOME,
+        )
+
+    def form_valid(self, form):
+        transaction = form.save(commit=False)
+        transaction.kind = Transaction.Kind.INCOME
+        transaction.interest_rate = None
+        transaction.save()
+        return super().form_valid(form)
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class IncomeDeleteView(DeleteView):
+    model = Transaction
+    template_name = 'fin_manager/income_confirm_delete.html'
+    success_url = reverse_lazy('incomes')
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account__user=self.request.user,
+            kind=Transaction.Kind.INCOME,
         )
 
 

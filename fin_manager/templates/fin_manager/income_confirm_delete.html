@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Delete Income{% endblock %}
+
+{% block content %}
+  <section class="card" style="max-width: 720px;">
+    <h1 class="title" style="color:#b91c1c;">Delete Income</h1>
+    <p class="subtitle">This action cannot be undone.</p>
+
+    <div class="income-item" style="margin-bottom:16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:12px 14px;">
+      <div style="display:flex; justify-content:space-between; gap:12px;">
+        <span style="font-weight:700;">{{ object.name }}</span>
+        <span style="font-weight:700; color:#15803d;">UGX {{ object.amount|floatformat:0|intcomma }}</span>
+      </div>
+      <div class="helper-text">Date: {{ object.due_date }}</div>
+    </div>
+
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap;">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary" style="max-width:260px; background:linear-gradient(90deg,#dc2626,#ef4444);">
+        Yes, Delete Income
+      </button>
+      <a href="{% url 'incomes' %}" class="dash-link" style="align-self:center;">Cancel</a>
+    </form>
+  </section>
+{% endblock %}

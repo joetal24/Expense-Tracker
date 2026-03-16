@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}Edit Income{% endblock %}
+
+{% block content %}
+  <section class="card form-card" style="max-width: 760px;">
+    <h1 class="title">Edit Income</h1>
+    <p class="subtitle">Update income details and save changes.</p>
+
+    <form method="post">
+      {% csrf_token %}
+      {% for field in form %}
+        <p style="margin-bottom: 12px;">
+          {{ field.label_tag }}
+          {{ field }}
+          {% if field.name == 'amount' %}
+            <small class="helper-text">Currency: UGX</small>
+          {% endif %}
+          {% for error in field.errors %}
+            <div class="error-box">{{ error }}</div>
+          {% endfor %}
+        </p>
+      {% endfor %}
+      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+        <button type="submit" class="btn-primary" style="max-width:260px;">Save Changes</button>
+        <a href="{% url 'incomes' %}" class="dash-link" style="align-self:center;">Cancel</a>
+      </div>
+    </form>
+  </section>
+{% endblock %}

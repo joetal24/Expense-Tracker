@@ -1,0 +1,168 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Income{% endblock %}
+
+{% block extra_styles %}
+  <style>
+    .layout-grid {
+      display: grid;
+      grid-template-columns: 1.2fr 1fr;
+      gap: 20px;
+    }
+
+    .income-list {
+      list-style: none;
+      padding-left: 0;
+      margin-top: 14px;
+    }
+
+    .income-item {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 12px 14px;
+      margin-bottom: 10px;
+    }
+
+    .income-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .income-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .income-name {
+      font-weight: 600;
+      color: #0f172a;
+    }
+
+    .income-amount {
+      font-weight: 700;
+      color: #15803d;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-btn {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 6px 9px;
+      text-decoration: none;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .action-edit {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .action-delete {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
+    .form-card p {
+      margin-bottom: 12px;
+      color: #0f172a;
+    }
+
+    .form-card label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 600;
+      color: #1e293b;
+    }
+
+    .form-card input,
+    .form-card select,
+    .form-card textarea {
+      width: 100%;
+      border: 1px solid #cbd5e1;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+      outline: none;
+    }
+
+    .form-card input:focus,
+    .form-card select:focus,
+    .form-card textarea:focus {
+      border-color: #3b82f6;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.18);
+    }
+
+    @media (max-width: 860px) {
+      .layout-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+  <div class="layout-grid">
+    <section class="card">
+      <h1 class="title">Income</h1>
+      <p class="subtitle">Overview of your income entries.</p>
+
+      {% if incomes %}
+        <ul class="income-list">
+          {% for income in incomes %}
+            <li class="income-item">
+              <div class="income-row">
+                <div class="income-main">
+                  <span class="income-name">{{ income.name }}</span>
+                  <div class="helper-text">Date: {{ income.due_date }}</div>
+                </div>
+                <span class="income-amount">UGX {{ income.amount|floatformat:0|intcomma }}</span>
+                <div class="item-actions">
+                  <a class="action-btn action-edit" href="{% url 'income_edit' income.pk %}">Edit</a>
+                  <a class="action-btn action-delete" href="{% url 'income_delete' income.pk %}">Delete</a>
+                </div>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="helper-text">No income available yet.</p>
+      {% endif %}
+    </section>
+
+    <section class="card form-card">
+      <h2 class="title">Add Income</h2>
+      <form method="post">
+        {% csrf_token %}
+        {% for field in form %}
+          <p>
+            {{ field.label_tag }}
+            {{ field }}
+            {% if field.name == 'amount' %}
+              <small class="helper-text">Currency: UGX</small>
+            {% endif %}
+            {% for error in field.errors %}
+              <div class="error-box">{{ error }}</div>
+            {% endfor %}
+          </p>
+        {% endfor %}
+        <button type="submit" class="btn-primary">Add Income</button>
+      </form>
+    </section>
+  </div>
+{% endblock %}
