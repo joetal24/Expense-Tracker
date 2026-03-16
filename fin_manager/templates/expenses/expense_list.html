@@ -148,7 +148,7 @@
                   <span class="item-amount">UGX {{ liability.amount|floatformat:0|intcomma }}</span>
                   <div class="item-actions">
                     <a class="action-btn action-edit" href="{% url 'expense_edit' liability.pk %}">Edit</a>
-                    <a class="action-btn action-delete" href="{% url 'expense_delete' liability.pk %}">Delete</a>
+                    <a class="action-btn action-delete" href="{% url 'expense_delete' liability.pk %}" onclick="return confirm('Are you sure you want to delete this expense?');">Delete</a>
                   </div>
                 </div>
               </li>

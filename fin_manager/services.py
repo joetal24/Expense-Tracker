@@ -35,14 +35,35 @@ def build_dashboard_summary(account):
 
     for key, (start_date, end_date) in periods.items():
         in_period = transactions.in_period(start_date, end_date)
+        expenses = in_period.expenses().total_amount()
+        loans = in_period.loans().total_amount()
+        incomes = in_period.incomes().total_amount()
+        combined = in_period.total_amount() if in_period.exists() else Decimal('0.00')
+        net_savings = incomes - expenses - loans
         totals[key] = {
-            'expenses': in_period.expenses().total_amount(),
-            'loans': in_period.loans().total_amount(),
-            'combined': in_period.total_amount() if in_period.exists() else Decimal('0.00'),
+            'expenses': expenses,
+            'loans': loans,
+            'incomes': incomes,
+            'combined': combined,
+            'net_savings': net_savings,
         }
         period_labels[key] = f"{start_date.strftime('%b %d')} - {end_date.strftime('%b %d, %Y')}"
+
+    # Budget progress (monthly)
+    monthly_budget = account.monthly_budget or Decimal('0.00')
+    monthly_expenses = totals['monthly']['expenses']
+    budget_progress = (monthly_expenses / monthly_budget * 100) if monthly_budget > 0 else None
+
+    # Savings target progress
+    savings_target = account.savings_target or Decimal('0.00')
+    monthly_net_savings = totals['monthly']['net_savings']
+    savings_progress = (monthly_net_savings / savings_target * 100) if savings_target > 0 else None
 
     return {
         'totals': totals,
         'periods': period_labels,
+        'budget_progress': float(budget_progress) if budget_progress is not None else None,
+        'monthly_budget': monthly_budget,
+        'savings_progress': float(savings_progress) if savings_progress is not None else None,
+        'savings_target': savings_target,
     }

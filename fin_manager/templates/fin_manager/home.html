@@ -161,57 +161,124 @@
       <p class="subtitle">{{ account.name }} • {{ account.currency }} summary by due-date period.</p>
 
       <div class="summary-grid">
+              <div style="grid-column: 1 / -1; margin-top: 32px;">
+                <div class="card" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:22px 24px;">
+                  <h2 style="font-size:1.2rem; font-weight:700; color:#1d4ed8; margin-bottom:12px;">Recent Activity</h2>
+                  <div style="display:grid; grid-template-columns: repeat(3, 1fr); gap:18px;">
+                    <div>
+                      <div style="font-weight:600; color:#0f172a; margin-bottom:6px;">Expenses</div>
+                      {% if recent_expenses %}
+                        <ul style="list-style:none; padding:0; margin:0;">
+                          {% for tx in recent_expenses %}
+                            <li style="margin-bottom:7px;">
+                              <span style="font-weight:600;">{{ tx.name }}</span>
+                              <span style="color:#b91c1c; font-weight:700; float:right;">-UGX {{ tx.amount|floatformat:0|intcomma }}</span><br>
+                              <span style="font-size:0.85em; color:#64748b;">{{ tx.due_date }}</span>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <span style="color:#64748b; font-size:0.95em;">No recent expenses.</span>
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div style="font-weight:600; color:#0f172a; margin-bottom:6px;">Income</div>
+                      {% if recent_incomes %}
+                        <ul style="list-style:none; padding:0; margin:0;">
+                          {% for tx in recent_incomes %}
+                            <li style="margin-bottom:7px;">
+                              <span style="font-weight:600;">{{ tx.name }}</span>
+                              <span style="color:#16a34a; font-weight:700; float:right;">+UGX {{ tx.amount|floatformat:0|intcomma }}</span><br>
+                              <span style="font-size:0.85em; color:#64748b;">{{ tx.due_date }}</span>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <span style="color:#64748b; font-size:0.95em;">No recent income.</span>
+                      {% endif %}
+                    </div>
+                    <div>
+                      <div style="font-weight:600; color:#0f172a; margin-bottom:6px;">Loans</div>
+                      {% if recent_loans %}
+                        <ul style="list-style:none; padding:0; margin:0;">
+                          {% for tx in recent_loans %}
+                            <li style="margin-bottom:7px;">
+                              <span style="font-weight:600;">{{ tx.name }}</span>
+                              <span style="color:#a78bfa; font-weight:700; float:right;">UGX {{ tx.amount|floatformat:0|intcomma }}</span><br>
+                              <span style="font-size:0.85em; color:#64748b;">{{ tx.due_date }}</span>
+                            </li>
+                          {% endfor %}
+                        </ul>
+                      {% else %}
+                        <span style="color:#64748b; font-size:0.95em;">No recent loans.</span>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              </div>
+        <div style="grid-column: 1 / -1; margin-bottom: 24px;">
+          <canvas id="dashboardLineChart" height="80"></canvas>
+        </div>
+        <div style="grid-column: 1 / -1; margin-bottom: 32px; max-width: 420px; margin-left:auto; margin-right:auto;">
+          <canvas id="dashboardPieChart" height="80"></canvas>
+        </div>
+        {% for period in 'weekly','monthly','yearly' %}
         <article class="period-card">
-          <h3 class="period-title">Weekly</h3>
-          <p class="period-range">{{ periods.weekly }}</p>
+          <h3 class="period-title">{{ period|capfirst }}</h3>
+          <p class="period-range">{{ periods.[period] }}</p>
           <div class="metric-row">
-            <span class="metric-label">Total Expenses</span>
-            <span class="metric-value">UGX {{ totals.weekly.expenses|floatformat:0|intcomma }}</span>
+            <span class="metric-label">Income</span>
+            <span class="metric-value" style="color:#15803d;">UGX {{ totals.[period].incomes|floatformat:0|intcomma }}</span>
           </div>
           <div class="metric-row">
-            <span class="metric-label">Total Loans to Pay</span>
-            <span class="metric-value">UGX {{ totals.weekly.loans|floatformat:0|intcomma }}</span>
+            <span class="metric-label">Expenses</span>
+            <span class="metric-value">UGX {{ totals.[period].expenses|floatformat:0|intcomma }}</span>
           </div>
           <div class="metric-row">
-            <span class="metric-label">Combined Total</span>
-            <span class="metric-value">UGX {{ totals.weekly.combined|floatformat:0|intcomma }}</span>
+            <span class="metric-label">Loans</span>
+            <span class="metric-value">UGX {{ totals.[period].loans|floatformat:0|intcomma }}</span>
+          </div>
+          <div class="metric-row">
+            <span class="metric-label">Net Savings</span>
+            <span class="metric-value" style="color:{% if totals.[period].net_savings < 0 %}#b91c1c{% else %}#166534{% endif %};">
+              UGX {{ totals.[period].net_savings|floatformat:0|intcomma }}
+            </span>
           </div>
         </article>
-
-        <article class="period-card">
-          <h3 class="period-title">Monthly</h3>
-          <p class="period-range">{{ periods.monthly }}</p>
-          <div class="metric-row">
-            <span class="metric-label">Total Expenses</span>
-            <span class="metric-value">UGX {{ totals.monthly.expenses|floatformat:0|intcomma }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Total Loans to Pay</span>
-            <span class="metric-value">UGX {{ totals.monthly.loans|floatformat:0|intcomma }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Combined Total</span>
-            <span class="metric-value">UGX {{ totals.monthly.combined|floatformat:0|intcomma }}</span>
-          </div>
-        </article>
-
-        <article class="period-card">
-          <h3 class="period-title">Yearly</h3>
-          <p class="period-range">{{ periods.yearly }}</p>
-          <div class="metric-row">
-            <span class="metric-label">Total Expenses</span>
-            <span class="metric-value">UGX {{ totals.yearly.expenses|floatformat:0|intcomma }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Total Loans to Pay</span>
-            <span class="metric-value">UGX {{ totals.yearly.loans|floatformat:0|intcomma }}</span>
-          </div>
-          <div class="metric-row">
-            <span class="metric-label">Combined Total</span>
-            <span class="metric-value">UGX {{ totals.yearly.combined|floatformat:0|intcomma }}</span>
-          </div>
-        </article>
+        {% endfor %}
       </div>
+
+      {% if monthly_budget and monthly_budget > 0 %}
+      <div style="margin-top:18px;">
+        <div style="font-weight:700; color:#1d4ed8;">Monthly Budget Progress</div>
+        <div style="margin:8px 0 4px 0; font-size:0.98rem;">
+          Budget: UGX {{ monthly_budget|floatformat:0|intcomma }} | Expenses: UGX {{ totals.monthly.expenses|floatformat:0|intcomma }}
+        </div>
+        <div style="background:#e0e7ff; border-radius:8px; height:16px; width:100%; overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#1d4ed8,#3b82f6); height:100%; width:{{ budget_progress|floatformat:0 }}%; min-width:2%;"></div>
+        </div>
+        <div style="font-size:0.92rem; margin-top:2px; color:{% if budget_progress > 100 %}#b91c1c{% else %}#166534{% endif %}; font-weight:600;">
+          {{ budget_progress|floatformat:1 }}% of budget used
+          {% if budget_progress > 100 %}<span style="margin-left:8px;">(Over budget!)</span>{% endif %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if savings_target and savings_target > 0 %}
+      <div style="margin-top:18px;">
+        <div style="font-weight:700; color:#0f766e;">Savings Target Progress</div>
+        <div style="margin:8px 0 4px 0; font-size:0.98rem;">
+          Target: UGX {{ savings_target|floatformat:0|intcomma }} | Net Savings: UGX {{ totals.monthly.net_savings|floatformat:0|intcomma }}
+        </div>
+        <div style="background:#d1fae5; border-radius:8px; height:16px; width:100%; overflow:hidden;">
+          <div style="background:linear-gradient(90deg,#0f766e,#14b8a6); height:100%; width:{{ savings_progress|floatformat:0 }}%; min-width:2%;"></div>
+        </div>
+        <div style="font-size:0.92rem; margin-top:2px; color:{% if savings_progress < 100 %}#92400e{% else %}#166534{% endif %}; font-weight:600;">
+          {{ savings_progress|floatformat:1 }}% of target achieved
+          {% if savings_progress >= 100 %}<span style="margin-left:8px;">(Target met!)</span>{% endif %}
+        </div>
+      </div>
+      {% endif %}
 
       <div class="dashboard-links">
         <a class="dash-link" href="{% url 'expenses' %}">Manage Expenses</a>
@@ -276,4 +343,96 @@
       </p>
     {% endif %}
   </div>
+{% endblock %}
+
+{% block extra_scripts %}
+  {{ block.super }}
+  <script>
+    // Line chart
+    const ctx = document.getElementById('dashboardLineChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [
+          {
+            label: 'Expenses',
+            data: {{ chart_expenses|safe }},
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59,130,246,0.08)',
+            tension: 0.3,
+            fill: true,
+          },
+          {
+            label: 'Income',
+            data: {{ chart_incomes|safe }},
+            borderColor: '#16a34a',
+            backgroundColor: 'rgba(22,163,74,0.08)',
+            tension: 0.3,
+            fill: true,
+          },
+          {
+            label: 'Loans',
+            data: {{ chart_loans|safe }},
+            borderColor: '#a78bfa',
+            backgroundColor: 'rgba(167,139,250,0.08)',
+            tension: 0.3,
+            fill: true,
+          },
+          {
+            label: 'Net Savings',
+            data: {{ chart_net_savings|safe }},
+            borderColor: '#0f766e',
+            backgroundColor: 'rgba(14,116,110,0.08)',
+            tension: 0.3,
+            fill: true,
+          },
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'top' },
+          title: { display: true, text: 'Period Overview' }
+        },
+        scales: {
+          y: { beginAtZero: true }
+        }
+      }
+    });
+
+    // Pie chart for monthly distribution
+    const pieCtx = document.getElementById('dashboardPieChart').getContext('2d');
+    new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: ['Expenses', 'Loans', 'Income'],
+        datasets: [{
+          data: [
+            {{ totals.monthly.expenses|floatformat:0 }},
+            {{ totals.monthly.loans|floatformat:0 }},
+            {{ totals.monthly.incomes|floatformat:0 }}
+          ],
+          backgroundColor: [
+            'rgba(59,130,246,0.7)',
+            'rgba(167,139,250,0.7)',
+            'rgba(22,163,74,0.7)'
+          ],
+          borderColor: [
+            '#3b82f6',
+            '#a78bfa',
+            '#16a34a'
+          ],
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        plugins: {
+          legend: { position: 'bottom' },
+          title: { display: true, text: 'Monthly Distribution' }
+        }
+      }
+    });
+  </script>
 {% endblock %}

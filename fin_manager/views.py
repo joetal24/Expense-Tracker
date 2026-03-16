@@ -50,6 +50,19 @@ def home(request):
         dashboard['totals']['yearly']['combined'],
     ]
 
+    income_points = [
+        dashboard['totals']['weekly']['incomes'],
+        dashboard['totals']['monthly']['incomes'],
+        dashboard['totals']['yearly']['incomes'],
+    ]
+    net_savings_points = [
+        dashboard['totals']['weekly']['net_savings'],
+        dashboard['totals']['monthly']['net_savings'],
+        dashboard['totals']['yearly']['net_savings'],
+    ]
+    recent_expenses = account.transactions.expenses().order_by('-due_date', '-created_at')[:5]
+    recent_incomes = account.transactions.incomes().order_by('-due_date', '-created_at')[:5]
+    recent_loans = account.transactions.loans().order_by('-due_date', '-created_at')[:5]
     context = {
         'user': request.user,
         'account': account,
@@ -59,9 +72,14 @@ def home(request):
         'chart_expenses': expense_points,
         'chart_loans': loan_points,
         'chart_combined': combined_points,
+        'chart_incomes': income_points,
+        'chart_net_savings': net_savings_points,
         'chart_max_expenses': max(expense_points) if any(expense_points) else 1,
         'chart_max_loans': max(loan_points) if any(loan_points) else 1,
         'chart_max_combined': max(combined_points) if any(combined_points) else 1,
+        'recent_expenses': recent_expenses,
+        'recent_incomes': recent_incomes,
+        'recent_loans': recent_loans,
     }
     return render(request, 'fin_manager/home.html', context)
 

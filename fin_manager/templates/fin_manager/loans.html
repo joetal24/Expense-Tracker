@@ -152,7 +152,7 @@
                 <span class="loan-amount">UGX {{ loan.amount|floatformat:0|intcomma }}</span>
                 <div class="loan-actions">
                   <a class="action-btn action-edit" href="{% url 'loan_edit' loan.pk %}">Edit</a>
-                  <a class="action-btn action-delete" href="{% url 'loan_delete' loan.pk %}">Delete</a>
+                  <a class="action-btn action-delete" href="{% url 'loan_delete' loan.pk %}" onclick="return confirm('Are you sure you want to delete this loan?');">Delete</a>
                 </div>
               </div>
             </li>
