@@ -67,6 +67,65 @@
       flex-wrap: wrap;
     }
 
+    .insights-grid {
+      margin-top: 16px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .insight-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 12px;
+    }
+
+    .insight-title {
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #1e3a8a;
+      margin-bottom: 8px;
+    }
+
+    .bar-row {
+      margin-bottom: 9px;
+    }
+
+    .bar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+      color: #334155;
+      font-weight: 600;
+    }
+
+    .bar-track {
+      height: 8px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 999px;
+    }
+
+    .bar-expense {
+      background: linear-gradient(90deg, #1d4ed8, #3b82f6);
+    }
+
+    .bar-loan {
+      background: linear-gradient(90deg, #7c3aed, #a78bfa);
+    }
+
+    .bar-combined {
+      background: linear-gradient(90deg, #0f766e, #14b8a6);
+    }
+
     .dash-link {
       display: inline-block;
       padding: 8px 12px;
@@ -85,6 +144,10 @@
 
     @media (max-width: 960px) {
       .summary-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .insights-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -154,6 +217,56 @@
         <a class="dash-link" href="{% url 'expenses' %}">Manage Expenses</a>
         <a class="dash-link" href="{% url 'loans' %}">Manage Loans</a>
       </div>
+
+      <section class="insights-grid">
+        <article class="insight-card">
+          <h3 class="insight-title">Expenses Comparison</h3>
+          <div class="bar-row">
+            <div class="bar-head"><span>Weekly</span><span>UGX {{ totals.weekly.expenses|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-expense" style="width:{% widthratio totals.weekly.expenses chart_max_expenses 100 %}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>Monthly</span><span>UGX {{ totals.monthly.expenses|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-expense" style="width:{% widthratio totals.monthly.expenses chart_max_expenses 100 %}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>Yearly</span><span>UGX {{ totals.yearly.expenses|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-expense" style="width:{% widthratio totals.yearly.expenses chart_max_expenses 100 %}%;"></div></div>
+          </div>
+        </article>
+
+        <article class="insight-card">
+          <h3 class="insight-title">Loans Comparison</h3>
+          <div class="bar-row">
+            <div class="bar-head"><span>Weekly</span><span>UGX {{ totals.weekly.loans|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-loan" style="width:{% widthratio totals.weekly.loans chart_max_loans 100 %}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>Monthly</span><span>UGX {{ totals.monthly.loans|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-loan" style="width:{% widthratio totals.monthly.loans chart_max_loans 100 %}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>Yearly</span><span>UGX {{ totals.yearly.loans|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-loan" style="width:{% widthratio totals.yearly.loans chart_max_loans 100 %}%;"></div></div>
+          </div>
+        </article>
+
+        <article class="insight-card">
+          <h3 class="insight-title">Combined Load</h3>
+          <div class="bar-row">
+            <div class="bar-head"><span>Weekly</span><span>UGX {{ totals.weekly.combined|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-combined" style="width:{% widthratio totals.weekly.combined chart_max_combined 100 %}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>Monthly</span><span>UGX {{ totals.monthly.combined|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-combined" style="width:{% widthratio totals.monthly.combined chart_max_combined 100 %}%;"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-head"><span>Yearly</span><span>UGX {{ totals.yearly.combined|floatformat:0|intcomma }}</span></div>
+            <div class="bar-track"><div class="bar-fill bar-combined" style="width:{% widthratio totals.yearly.combined chart_max_combined 100 %}%;"></div></div>
+          </div>
+        </article>
+      </section>
     {% else %}
       <h1 class="title">Welcome!</h1>
       <p class="subtitle">

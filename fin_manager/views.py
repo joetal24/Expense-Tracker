@@ -3,7 +3,9 @@ from collections import defaultdict
 from django.contrib.auth import login
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
+from django.urls import reverse_lazy
 from django.shortcuts import redirect, render
+from django.views.generic import DeleteView, UpdateView
 from django.utils.decorators import method_decorator
 from django.views.generic.edit import FormView
 
@@ -25,12 +27,34 @@ def home(request):
     )
 
     dashboard = build_dashboard_summary(account)
+    expense_points = [
+        dashboard['totals']['weekly']['expenses'],
+        dashboard['totals']['monthly']['expenses'],
+        dashboard['totals']['yearly']['expenses'],
+    ]
+    loan_points = [
+        dashboard['totals']['weekly']['loans'],
+        dashboard['totals']['monthly']['loans'],
+        dashboard['totals']['yearly']['loans'],
+    ]
+    combined_points = [
+        dashboard['totals']['weekly']['combined'],
+        dashboard['totals']['monthly']['combined'],
+        dashboard['totals']['yearly']['combined'],
+    ]
 
     context = {
         'user': request.user,
         'account': account,
         'totals': dashboard['totals'],
         'periods': dashboard['periods'],
+        'chart_labels': ['Weekly', 'Monthly', 'Yearly'],
+        'chart_expenses': expense_points,
+        'chart_loans': loan_points,
+        'chart_combined': combined_points,
+        'chart_max_expenses': max(expense_points) if any(expense_points) else 1,
+        'chart_max_loans': max(loan_points) if any(loan_points) else 1,
+        'chart_max_combined': max(combined_points) if any(combined_points) else 1,
     }
     return render(request, 'fin_manager/home.html', context)
 
@@ -55,7 +79,7 @@ def register(request):
 class ExpenseListView(FormView):
     template_name = 'expenses/expense_list.html'
     form_class = ExpenseForm
-    success_url = '/expenses/'
+    success_url = reverse_lazy('expenses')
 
     def form_valid(self, form):
         account, _ = Account.objects.get_or_create(
@@ -89,10 +113,44 @@ class ExpenseListView(FormView):
 
 
 @method_decorator(login_required(login_url='login'), name='dispatch')
+class ExpenseUpdateView(UpdateView):
+    model = Transaction
+    form_class = ExpenseForm
+    template_name = 'expenses/expense_edit.html'
+    success_url = reverse_lazy('expenses')
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account__user=self.request.user,
+            kind=Transaction.Kind.EXPENSE,
+        )
+
+    def form_valid(self, form):
+        transaction = form.save(commit=False)
+        transaction.kind = Transaction.Kind.EXPENSE
+        transaction.interest_rate = None
+        transaction.save()
+        return super().form_valid(form)
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class ExpenseDeleteView(DeleteView):
+    model = Transaction
+    template_name = 'expenses/expense_confirm_delete.html'
+    success_url = reverse_lazy('expenses')
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account__user=self.request.user,
+            kind=Transaction.Kind.EXPENSE,
+        )
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
 class LoanListView(FormView):
     template_name = 'fin_manager/loans.html'
     form_class = LoanForm
-    success_url = '/loans/'
+    success_url = reverse_lazy('loans')
 
     def form_valid(self, form):
         account, _ = Account.objects.get_or_create(
@@ -114,6 +172,39 @@ class LoanListView(FormView):
         )
         context['loans'] = account.transactions.loans().order_by('-due_date')
         return context
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class LoanUpdateView(UpdateView):
+    model = Transaction
+    form_class = LoanForm
+    template_name = 'fin_manager/loan_edit.html'
+    success_url = reverse_lazy('loans')
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account__user=self.request.user,
+            kind=Transaction.Kind.LOAN,
+        )
+
+    def form_valid(self, form):
+        transaction = form.save(commit=False)
+        transaction.kind = Transaction.Kind.LOAN
+        transaction.save()
+        return super().form_valid(form)
+
+
+@method_decorator(login_required(login_url='login'), name='dispatch')
+class LoanDeleteView(DeleteView):
+    model = Transaction
+    template_name = 'fin_manager/loan_confirm_delete.html'
+    success_url = reverse_lazy('loans')
+
+    def get_queryset(self):
+        return Transaction.objects.filter(
+            account__user=self.request.user,
+            kind=Transaction.Kind.LOAN,
+        )
 
 
 def healthcheck(request):

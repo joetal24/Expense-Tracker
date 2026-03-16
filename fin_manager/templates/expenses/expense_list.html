@@ -39,6 +39,40 @@
       margin-bottom: 2px;
     }
 
+    .item-main {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .item-actions {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .action-btn {
+      display: inline-block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      border-radius: 8px;
+      padding: 6px 9px;
+      text-decoration: none;
+      border: 1px solid transparent;
+      white-space: nowrap;
+    }
+
+    .action-edit {
+      background: #eff6ff;
+      color: #1d4ed8;
+      border-color: #bfdbfe;
+    }
+
+    .action-delete {
+      background: #fef2f2;
+      color: #b91c1c;
+      border-color: #fecaca;
+    }
+
     .item-name {
       font-weight: 600;
       color: #0f172a;
@@ -107,10 +141,16 @@
             {% for liability in liabilities %}
               <li class="list-item">
                 <div class="item-row">
-                  <span class="item-name">{{ liability.name }}</span>
+                  <div class="item-main">
+                    <span class="item-name">{{ liability.name }}</span>
+                    <div class="helper-text">Due Date: {{ liability.due_date }}</div>
+                  </div>
                   <span class="item-amount">UGX {{ liability.amount|floatformat:0|intcomma }}</span>
+                  <div class="item-actions">
+                    <a class="action-btn action-edit" href="{% url 'expense_edit' liability.pk %}">Edit</a>
+                    <a class="action-btn action-delete" href="{% url 'expense_delete' liability.pk %}">Delete</a>
+                  </div>
                 </div>
-                <div class="helper-text">Due Date: {{ liability.due_date }}</div>
               </li>
             {% endfor %}
           </ul>

@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+{% load humanize %}
+
+{% block title %}Delete Loan{% endblock %}
+
+{% block content %}
+  <section class="card" style="max-width: 720px;">
+    <h1 class="title" style="color:#b91c1c;">Delete Loan</h1>
+    <p class="subtitle">This action cannot be undone.</p>
+
+    <div class="loan-item" style="margin-bottom:16px;">
+      <div class="loan-row">
+        <span class="loan-name">{{ object.name }}</span>
+        <span class="loan-amount">UGX {{ object.amount|floatformat:0|intcomma }}</span>
+      </div>
+      <div class="helper-text">Due Date: {{ object.due_date }}</div>
+    </div>
+
+    <form method="post" style="display:flex; gap:10px; flex-wrap:wrap;">
+      {% csrf_token %}
+      <button type="submit" class="btn-primary" style="max-width:260px; background:linear-gradient(90deg,#dc2626,#ef4444);">
+        Yes, Delete Loan
+      </button>
+      <a href="{% url 'loans' %}" class="dash-link" style="align-self:center;">Cancel</a>
+    </form>
+  </section>
+{% endblock %}

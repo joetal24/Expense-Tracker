@@ -4,7 +4,11 @@ from . import views
 urlpatterns = [
     path('', views.home, name='home'),
     path('expenses/', views.ExpenseListView.as_view(), name='expenses'),
+    path('expenses/<int:pk>/edit/', views.ExpenseUpdateView.as_view(), name='expense_edit'),
+    path('expenses/<int:pk>/delete/', views.ExpenseDeleteView.as_view(), name='expense_delete'),
     path('loans/', views.LoanListView.as_view(), name='loans'),
+    path('loans/<int:pk>/edit/', views.LoanUpdateView.as_view(), name='loan_edit'),
+    path('loans/<int:pk>/delete/', views.LoanDeleteView.as_view(), name='loan_delete'),
     path('healthz/', views.healthcheck, name='healthcheck'),
     path('healthz', views.healthcheck, name='healthcheck_no_slash'),
     path('kaithhealthcheck/', views.healthcheck, name='kaithhealthcheck'),
