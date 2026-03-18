@@ -25,7 +25,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-)14x05x&n&t&qb&u2(!@q+t(*idy)f^lwy@uui^_n(6^t9n%c4')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DJANGO_DEBUG', 'False').lower() == 'true'
+DEBUG = True  # Temporarily set to True for debugging. Set back to False after fixing the error.
 
 ALLOWED_HOSTS = [
     'xpense-racker-joetal246596-vck4udhn.leapcell.dev',
