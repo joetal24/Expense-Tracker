@@ -225,23 +225,23 @@
         {% for period in period_list %}
         <article class="period-card">
           <h3 class="period-title">{{ period|capfirst }}</h3>
-          <p class="period-range">{{ periods.[period] }}</p>
+          <p class="period-range">{{ periods.period }}</p>
           <div class="metric-row">
             <span class="metric-label">Income</span>
-            <span class="metric-value" style="color:#15803d;">UGX {{ totals.[period].incomes|floatformat:0|intcomma }}</span>
+            <span class="metric-value" style="color:#15803d;">UGX {{ totals.period.incomes|floatformat:0|intcomma }}</span>
           </div>
           <div class="metric-row">
             <span class="metric-label">Expenses</span>
-            <span class="metric-value">UGX {{ totals.[period].expenses|floatformat:0|intcomma }}</span>
+            <span class="metric-value">UGX {{ totals.period.expenses|floatformat:0|intcomma }}</span>
           </div>
           <div class="metric-row">
             <span class="metric-label">Loans</span>
-            <span class="metric-value">UGX {{ totals.[period].loans|floatformat:0|intcomma }}</span>
+            <span class="metric-value">UGX {{ totals.period.loans|floatformat:0|intcomma }}</span>
           </div>
           <div class="metric-row">
             <span class="metric-label">Net Savings</span>
-            <span class="metric-value" style="color:{% if totals.[period].net_savings < 0 %}#b91c1c{% else %}#166534{% endif %};">
-              UGX {{ totals.[period].net_savings|floatformat:0|intcomma }}
+            <span class="metric-value" style="color:{% if totals.period.net_savings < 0 %}#b91c1c{% else %}#166534{% endif %};">
+              UGX {{ totals.period.net_savings|floatformat:0|intcomma }}
             </span>
           </div>
         </article>
