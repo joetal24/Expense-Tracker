@@ -68,6 +68,7 @@ def home(request):
         'account': account,
         'totals': dashboard['totals'],
         'periods': dashboard['periods'],
+        'period_list': ['weekly', 'monthly', 'yearly'],
         'chart_labels': ['Weekly', 'Monthly', 'Yearly'],
         'chart_expenses': expense_points,
         'chart_loans': loan_points,
